@@ -66,9 +66,13 @@ npm ci
 | `npm run lint:styles`  | Stylelint sobre los archivos SCSS                                       |
 | `npm run format:check` | Verifica el formato con Prettier                                        |
 | `npm run format`       | Aplica el formato con Prettier                                          |
+| `npm test`             | Pruebas con Jest y umbrales de cobertura                                |
+| `npm run typecheck`    | Verifica los tipos con TypeScript                                       |
+| `npm run build`        | Genera el build de producción en `dist/`                                |
 
 ## Flujo de trabajo
 
 - Ramas: `main` (estable), `develop` (integración) y `feature/HU-xxx-descripcion`.
 - Commits en inglés con [Conventional Commits](https://www.conventionalcommits.org/), validados por commitlint.
 - Antes de cada commit, lint-staged ejecuta ESLint, Stylelint y Prettier sobre los archivos modificados.
+- Integración continua con GitHub Actions en cada PR y push a `develop` y `main`: lint, estilos, formato, tipos, pruebas con umbrales de cobertura, build y `npm audit`. Dependabot propone actualizaciones semanales de npm y de las acciones.

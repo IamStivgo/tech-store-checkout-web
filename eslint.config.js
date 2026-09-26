@@ -141,5 +141,14 @@ export default tseslint.config(
       'import/no-named-as-default-member': 'off',
     },
   },
+  {
+    files: ['scripts/**/*.js'],
+    languageOptions: {
+      globals: globals.node,
+    },
+    rules: {
+      'no-console': 'off',
+    },
+  },
   prettier,
 );

@@ -43,10 +43,15 @@ Mobile-first checkout SPA for a tech accessories store. The user picks a product
 ```bash
 nvm use                 # Node.js 24
 npm ci
+npm test                # Jest with coverage gates
+npm run typecheck
 npm run lint
 npm run lint:styles
 npm run format:check
+npm run build
 ```
+
+CI (`.github/workflows/ci.yml`) runs all of the above plus `npm audit` on every pull request and push to `develop` and `main`. Actions are pinned by commit SHA.
 
 ## Git workflow
 
