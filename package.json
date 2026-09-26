@@ -17,6 +17,8 @@
     "lint:styles": "stylelint \"src/**/*.scss\" --allow-empty-input",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "typecheck": "tsc -b",
+    "test": "jest --coverage",
     "prepare": "husky"
   },
   "dependencies": {
