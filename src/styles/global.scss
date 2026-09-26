@@ -1,0 +1,7 @@
+@use 'abstracts/tokens';
+@use 'base/reset';
+@use 'base/typography';
+
+:root {
+  @include tokens.custom-properties;
+}

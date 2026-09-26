@@ -1,0 +1,148 @@
+@use 'sass:meta';
+
+$colors: (
+  'primary': #1d4ed8,
+  'primary-hover': #1e40af,
+  'primary-strong': #1e3a8a,
+  'primary-subtle': #dbeafe,
+  'primary-contrast': #fff,
+  'accent': #0e7490,
+  'bg': #f8fafc,
+  'surface': #fff,
+  'surface-muted': #f1f5f9,
+  'border': #e2e8f0,
+  'border-strong': #64748b,
+  'text': #0f172a,
+  'text-muted': #475569,
+  'success': #15803d,
+  'success-strong': #166534,
+  'success-subtle': #dcfce7,
+  'warning': #b45309,
+  'warning-strong': #92400e,
+  'warning-subtle': #fef3c7,
+  'danger': #b91c1c,
+  'danger-subtle': #fee2e2,
+  'overlay': rgb(15 23 42 / 56%),
+  'focus': #1d4ed8,
+  'focus-inverse': #fff,
+  'disabled-bg': #f1f5f9,
+  'disabled-border': #e2e8f0,
+  'disabled-text': #475569,
+);
+
+$font-families: (
+  'base': (
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    roboto,
+    'Helvetica Neue',
+    arial,
+    'Noto Sans',
+    sans-serif,
+  ),
+  'mono': (
+    ui-monospace,
+    'SF Mono',
+    menlo,
+    consolas,
+    monospace,
+  ),
+);
+
+$font-sizes: (
+  'xs': 0.75rem,
+  'sm': 0.875rem,
+  'base': 1rem,
+  'lg': clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem),
+  'xl': clamp(1.375rem, 1.2rem + 0.8vw, 1.75rem),
+  '2xl': clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem),
+);
+
+$font-weights: (
+  'regular': 400,
+  'medium': 500,
+  'semibold': 600,
+  'bold': 700,
+);
+
+$line-heights: (
+  'tight': 1.2,
+  'normal': 1.5,
+);
+
+$spaces: (
+  '1': 0.25rem,
+  '2': 0.5rem,
+  '3': 0.75rem,
+  '4': 1rem,
+  '5': 1.25rem,
+  '6': 1.5rem,
+  '7': 2rem,
+  '8': 2.5rem,
+  '9': 3rem,
+  '10': 4rem,
+);
+
+$radii: (
+  'sm': 6px,
+  'md': 12px,
+  'lg': 20px,
+  'pill': 999px,
+);
+
+$shadows: (
+  '1': (
+    0 1px 2px rgb(15 23 42 / 6%),
+    0 1px 3px rgb(15 23 42 / 10%),
+  ),
+  '2': 0 4px 12px rgb(15 23 42 / 12%),
+  '3': 0 16px 40px rgb(15 23 42 / 20%),
+);
+
+$z-indexes: (
+  'header': 10,
+  'sticky': 20,
+  'backdrop': 40,
+  'modal': 50,
+  'toast': 60,
+);
+
+$durations: (
+  'fast': 150ms,
+  'base': 250ms,
+  'slow': 400ms,
+);
+
+$easings: (
+  'standard': cubic-bezier(0.4, 0, 0.2, 1),
+  'decelerate': cubic-bezier(0, 0, 0.2, 1),
+  'accelerate': cubic-bezier(0.4, 0, 1, 1),
+);
+
+$layout: (
+  'max-width': 1200px,
+);
+
+$groups: (
+  'color': $colors,
+  'font-family': $font-families,
+  'font-size': $font-sizes,
+  'font-weight': $font-weights,
+  'line-height': $line-heights,
+  'space': $spaces,
+  'radius': $radii,
+  'shadow': $shadows,
+  'z': $z-indexes,
+  'duration': $durations,
+  'easing': $easings,
+  'layout': $layout,
+);
+
+@mixin custom-properties {
+  @each $group, $tokens in $groups {
+    @each $name, $value in $tokens {
+      --#{$group}-#{$name}: #{meta.inspect($value)};
+    }
+  }
+}
