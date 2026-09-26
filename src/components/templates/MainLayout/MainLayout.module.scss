@@ -1,0 +1,40 @@
+@use '../../../styles/abstracts' as *;
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.skipLink {
+  @include visually-hidden;
+
+  &:focus-visible {
+    position: fixed;
+    top: var(--space-2);
+    left: var(--space-2);
+    z-index: var(--z-toast);
+    width: auto;
+    height: auto;
+    padding: var(--space-3) var(--space-4);
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-primary-contrast);
+    white-space: normal;
+    background-color: var(--color-primary);
+    border-radius: var(--radius-md);
+  }
+}
+
+.main {
+  @include page-container;
+
+  flex: 1;
+
+  &:focus {
+    outline: none;
+  }
+}
