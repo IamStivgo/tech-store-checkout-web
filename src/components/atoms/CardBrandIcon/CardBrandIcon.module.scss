@@ -1,0 +1,33 @@
+.brand {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in var(--duration-fast) var(--easing-standard);
+}
+
+.sm {
+  width: 32px;
+  height: 20px;
+}
+
+.md {
+  width: 40px;
+  height: 26px;
+}
+
+.unknown {
+  color: var(--color-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand {
+    animation: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
