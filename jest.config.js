@@ -1,5 +1,6 @@
 export default {
-  testEnvironment: 'jsdom',
+  // jsdom with the fetch API of Node (Request, Response), which RTK Query needs.
+  testEnvironment: 'jest-fixed-jsdom',
   // Tests live in test/, mirroring src/.
   roots: ['<rootDir>/test'],
   setupFilesAfterEnv: ['<rootDir>/test/setup-tests.ts'],
