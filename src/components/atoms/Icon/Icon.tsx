@@ -1,6 +1,6 @@
 import { ICONS, type IconName } from './icons';
 
-export type IconSize = 16 | 20 | 24;
+export type IconSize = 16 | 20 | 24 | 48;
 
 export interface IconProps {
   readonly name: IconName;

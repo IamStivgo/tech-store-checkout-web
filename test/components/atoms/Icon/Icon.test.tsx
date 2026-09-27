@@ -17,7 +17,7 @@ describe('Icon', () => {
     expect(screen.getByRole('img', { name: 'Advertencia' })).toBeInTheDocument();
   });
 
-  it.each([16, 20, 24] as const)('renders at %i px', (size) => {
+  it.each([16, 20, 24, 48] as const)('renders at %i px', (size) => {
     const { container } = render(<Icon name="plus" size={size} />);
 
     expect(container.querySelector('svg')).toHaveAttribute('width', String(size));
