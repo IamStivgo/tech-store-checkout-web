@@ -7,4 +7,12 @@ describe('createAppStore', () => {
 
     expect(store.getState()).toHaveProperty(baseApi.reducerPath);
   });
+
+  it('registers the checkout state', () => {
+    expect(createAppStore().getState().checkout).toEqual({
+      productId: null,
+      quantity: 1,
+      step: 'PRODUCT',
+    });
+  });
 });

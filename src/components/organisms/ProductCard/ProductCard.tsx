@@ -1,28 +1,16 @@
 import { Link } from 'react-router';
 
 import { Price } from '../../atoms/Price';
+import { ResponsiveImage, type ResponsiveImageData } from '../../atoms/ResponsiveImage';
 import { StockBadge, type StockStatus } from '../../molecules/StockBadge';
 
 import styles from './ProductCard.module.scss';
-
-export interface ProductImageSource {
-  readonly type: string;
-  readonly srcSet: string;
-}
-
-export interface ProductCardImage {
-  readonly src: string;
-  readonly alt: string;
-  readonly width: number;
-  readonly height: number;
-  readonly sources: readonly ProductImageSource[];
-}
 
 export interface ProductCardProps {
   readonly href: string;
   readonly name: string;
   readonly priceInCents: number;
-  readonly image: ProductCardImage;
+  readonly image: ResponsiveImageData;
   readonly stockStatus: StockStatus;
   /** Text from the copy deck, e.g. "30 disponibles", "Últimas 3" or "Agotado". */
   readonly stockLabel: string;
@@ -45,20 +33,7 @@ export function ProductCard({
 
   return (
     <Link to={href} className={`${styles.card} ${soldOut ? styles.soldOut : ''}`}>
-      <picture className={styles.media}>
-        {image.sources.map(({ type, srcSet }) => (
-          <source key={type} type={type} srcSet={srcSet} sizes={IMAGE_SIZES} />
-        ))}
-        <img
-          className={styles.image}
-          src={image.src}
-          alt={image.alt}
-          width={image.width}
-          height={image.height}
-          loading="lazy"
-          decoding="async"
-        />
-      </picture>
+      <ResponsiveImage image={image} sizes={IMAGE_SIZES} className={styles.media} />
       <div className={styles.body}>
         <h2 className={styles.name}>{name}</h2>
         <Price amountInCents={priceInCents} size="lg" />
