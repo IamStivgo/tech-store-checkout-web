@@ -1,0 +1,20 @@
+@use '../../../styles/abstracts' as *;
+
+// Pages that use it reserve 96 px at the bottom so the fixed bar never covers content.
+.bar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: var(--z-sticky);
+  padding: var(--space-3) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom));
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-2);
+
+  @include mq('lg') {
+    position: static;
+    min-width: 320px;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+  }
+}

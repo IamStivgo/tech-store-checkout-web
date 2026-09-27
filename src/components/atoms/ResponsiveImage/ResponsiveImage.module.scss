@@ -1,0 +1,17 @@
+// Same background as the photos, so a loading image causes no visual jump.
+.picture {
+  display: block;
+  aspect-ratio: 1;
+  background-color: var(--color-surface-muted);
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+
+  // If the file fails to load, browsers paint the alt text over the placeholder; screen
+  // readers still announce it.
+  color: transparent;
+}
