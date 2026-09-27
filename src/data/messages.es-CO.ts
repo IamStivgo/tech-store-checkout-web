@@ -10,6 +10,16 @@ export const messages = {
   catalog: {
     title: 'Accesorios tecnológicos',
     subtitle: 'Envío a toda Colombia · Paga con tarjeta de crédito',
+    error: 'No pudimos cargar los productos.',
+    empty: {
+      title: 'Pronto tendremos productos',
+      body: 'Vuelve más tarde.',
+    },
+  },
+  stock: {
+    inStock: (units: number) => `${units} disponibles`,
+    lowStock: (units: number) => `Últimas ${units}`,
+    outOfStock: 'Agotado',
   },
   notFound: {
     page: {
@@ -19,5 +29,6 @@ export const messages = {
   },
   common: {
     goToStore: 'Ir a la tienda',
+    retry: 'Reintentar',
   },
 } as const;
