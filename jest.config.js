@@ -8,7 +8,8 @@ export default {
   moduleNameMapper: {
     '\\.(css|scss)$': 'identity-obj-proxy',
   },
-  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/main.tsx', '!src/**/*.d.ts'],
+  // Barrel files only re-export; the components they expose are tested directly.
+  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/main.tsx', '!src/**/*.d.ts', '!src/**/index.ts'],
   coverageReporters: ['text-summary', 'json-summary', 'lcov', 'html'],
   coverageThreshold: {
     global: { statements: 85, lines: 85, functions: 85, branches: 81 },

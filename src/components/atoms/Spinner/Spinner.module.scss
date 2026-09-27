@@ -1,0 +1,51 @@
+@use '../../../styles/abstracts' as *;
+
+.spinner {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.small,
+.large {
+  animation: spin 0.8s linear infinite;
+}
+
+// The processing spinner uses the brand color; the small one inherits the button text color.
+.large {
+  color: var(--color-primary);
+}
+
+.track {
+  stroke: currentcolor;
+  stroke-width: 3;
+  opacity: 0.25;
+}
+
+.arc {
+  stroke: currentcolor;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.label {
+  @include visually-hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .small,
+  .large {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.4;
+  }
+}
