@@ -1,9 +1,10 @@
 export default {
   testEnvironment: 'jsdom',
-  roots: ['<rootDir>/src', '<rootDir>/test'],
+  // Tests live in test/, mirroring src/.
+  roots: ['<rootDir>/test'],
   setupFilesAfterEnv: ['<rootDir>/test/setup-tests.ts'],
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.test.json' }],
+    '^.+\\.tsx?$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.jest.json' }],
   },
   moduleNameMapper: {
     '\\.(css|scss)$': 'identity-obj-proxy',
