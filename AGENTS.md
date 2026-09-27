@@ -15,7 +15,7 @@ Mobile-first checkout SPA for a tech accessories store. The user picks a product
 - All business state lives in Redux (Flux). Contexts hold no business state.
 - `src/config/env.ts` is the only place that reads `import.meta.env`.
 - These rules are enforced by `eslint-plugin-boundaries`; do not disable them.
-- Each component lives in its own folder: `Button/Button.tsx`, `Button.module.scss`, `Button.test.tsx`, `index.ts`.
+- Each component lives in its own folder: `Button/Button.tsx`, `Button.module.scss`, `index.ts`. Its test lives in `test/`, mirroring `src/` (`test/components/atoms/Button/Button.test.tsx`).
 
 ## Code conventions
 
@@ -28,6 +28,7 @@ Mobile-first checkout SPA for a tech accessories store. The user picks a product
 ## Testing
 
 - Jest + React Testing Library + user-event. Test behavior from the user's perspective, following the AAA pattern.
+- Tests never live in `src/`: they go in `test/` with the same path as the file they test and import it relatively. `tsconfig.test.json` type-checks them with the app settings; `tsconfig.jest.json` only adapts them for ts-jest (CommonJS).
 - Components in `src/components/` are tested with props only (no store, no API).
 - Coverage gates: statements, lines and functions ≥ 85 %, branches ≥ 81 %.
 

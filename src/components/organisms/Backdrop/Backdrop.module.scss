@@ -1,0 +1,109 @@
+@use '../../../styles/abstracts' as *;
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-backdrop);
+  display: flex;
+  justify-content: center;
+
+  @include mq('md') {
+    align-items: center;
+    padding: var(--space-4);
+    background-color: var(--color-overlay);
+  }
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-primary-strong);
+
+  &:focus-visible {
+    outline: none;
+  }
+
+  @include mq('md') {
+    width: 560px;
+    height: auto;
+    max-height: 90vh;
+    background-color: transparent;
+  }
+}
+
+.back {
+  flex: 1;
+  padding: var(--space-4);
+  color: var(--color-primary-contrast);
+  background-color: var(--color-primary-strong);
+
+  @include mq('md') {
+    flex: none;
+    padding: var(--space-6) var(--space-6) calc(var(--space-6) + var(--space-6));
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+}
+
+// About 70 % of the viewport on mobile; on wider screens it overlaps the back card by 24 px.
+.front {
+  display: flex;
+  flex-direction: column;
+  height: 70vh;
+  min-height: 0;
+  padding: var(--space-2) var(--space-4) 0;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-3);
+  animation: rise var(--duration-base) var(--easing-decelerate);
+
+  @include mq('md') {
+    height: auto;
+    min-height: 0;
+    margin-top: calc(-1 * var(--space-6));
+    border-radius: var(--radius-lg);
+  }
+}
+
+.handle {
+  flex-shrink: 0;
+  align-self: center;
+  width: 36px;
+  height: 4px;
+  margin-bottom: var(--space-3);
+  background-color: var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+.title {
+  flex-shrink: 0;
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+// Scrolls inside so the pay button stays visible.
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.footer {
+  flex-shrink: 0;
+  padding: var(--space-3) 0 calc(var(--space-3) + env(safe-area-inset-bottom));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .front {
+    animation: none;
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(24px);
+  }
+}
