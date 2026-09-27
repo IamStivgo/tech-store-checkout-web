@@ -8,6 +8,7 @@ import type { ProductDetail } from '../../../../../src/services/api/contract';
 import { createAppStore, type RootState } from '../../../../../src/store/store';
 import { aProductDetail } from '../../../../builders/product.builder';
 import { stubFetch } from '../../../../services/api/fetch-stub';
+import { citiesOf, DEPARTMENTS, fillValidCheckoutForm } from '../../../checkout/fill-checkout-form';
 
 const PRODUCT_ID = '7d094266-0b4e-4789-9522-96e1cd7ffa60';
 
@@ -87,7 +88,9 @@ describe('ProductPage', () => {
 
   it('lowers a quantity chosen before when the stock no longer allows it', async () => {
     fetchStub.respondJson(lowStock());
-    renderProductPage({ checkout: { productId: PRODUCT_ID, quantity: 5, step: 'PRODUCT' } });
+    renderProductPage({
+      checkout: { productId: PRODUCT_ID, quantity: 5, step: 'PRODUCT', details: null },
+    });
 
     expect(await screen.findByRole('spinbutton', { name: 'Cantidad' })).toHaveAttribute(
       'aria-valuenow',
@@ -95,18 +98,58 @@ describe('ProductPage', () => {
     );
   });
 
-  it('starts the checkout with the chosen quantity', async () => {
+  it('opens the checkout form with the chosen quantity and closes it', async () => {
     fetchStub.respondJson(aProductDetail());
+    fetchStub.respondJson({ data: [], meta: { count: 0 } });
     const store = renderProductPage();
 
     await userEvent.click(await screen.findByRole('button', { name: 'Aumentar cantidad' }));
     await userEvent.click(screen.getByRole('button', { name: 'Pagar con tarjeta de crédito' }));
 
-    expect(store.getState().checkout).toEqual({
+    expect(screen.getByRole('dialog', { name: 'Pago con tarjeta' })).toBeInTheDocument();
+    expect(store.getState().checkout).toMatchObject({
       productId: PRODUCT_ID,
       quantity: 2,
       step: 'DETAILS',
     });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cerrar' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(store.getState().checkout.step).toBe('PRODUCT');
+  });
+
+  it('keeps only the brand and last four digits of the card when the form is sent', async () => {
+    fetchStub.respondJson(aProductDetail());
+    fetchStub.respondJson(DEPARTMENTS);
+    fetchStub.respondJson(citiesOf('11001', 'Bogotá, D.C.'));
+    const store = renderProductPage();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Pagar con tarjeta de crédito' }));
+
+    await fillValidCheckoutForm(user);
+    await user.click(screen.getByRole('button', { name: 'Continuar' }));
+
+    const { checkout } = store.getState();
+    expect(checkout.step).toBe('SUMMARY');
+    expect(checkout.details).toMatchObject({
+      installments: 3,
+      card: { brand: 'VISA', lastFour: '4242' },
+      customer: { email: 'ana.gomez@example.com' },
+      shipping: { cityCode: '11001' },
+    });
+    expect(JSON.stringify(checkout)).not.toMatch(/4242 4242|4242424242424242|"123"/);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('keeps the checkout form closed on another product', async () => {
+    fetchStub.respondJson(aProductDetail());
+    renderProductPage({
+      checkout: { productId: 'another-product', quantity: 1, step: 'DETAILS', details: null },
+    });
+
+    expect(await screen.findByRole('heading', { level: 1 })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('blocks the purchase of a sold-out product', async () => {
