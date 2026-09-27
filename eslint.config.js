@@ -19,7 +19,7 @@ const SHARED = ['utils', 'config', 'styles', 'assets'];
 
 export default tseslint.config(
   {
-    ignores: ['dist/', 'coverage/'],
+    ignores: ['dist/', 'coverage/', 'src/services/api/generated/'],
   },
   eslint.configs.recommended,
   tseslint.configs.strictTypeChecked,

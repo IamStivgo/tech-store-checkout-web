@@ -48,10 +48,22 @@ npm run typecheck
 npm run lint
 npm run lint:styles
 npm run format:check
+npm run contract:check  # API types match the api release pinned in contract.json
 npm run build
 ```
 
 CI (`.github/workflows/ci.yml`) runs all of the above plus `npm audit` on every pull request and push to `develop` and `main`. Actions are pinned by commit SHA.
+
+## API contract
+
+- `contract.json` pins the api release (`version` is its git tag). `npm run contract:sync` downloads that release's `openapi.json` and regenerates `src/services/api/generated/api-contract.ts`; never edit that file by hand. CI runs `contract:check`.
+- To adopt a new API version: bump `contract.json`, run `npm run contract:sync`, fix type errors, commit both files.
+- Use the generated `paths`/`components` types for API calls instead of redeclaring response shapes.
+
+## Deployment
+
+- `deploy.yml` runs after CI succeeds on `main`, in the `production` environment, with the OIDC role from `secrets.AWS_DEPLOY_ROLE_ARN`. Resource names come from `/checkout-app/prod/deploy/*`; never hard-code them or print the AWS account ID.
+- Upload: `assets/` (hashed) as immutable and never deleted, other files for one hour, `index.html` with `no-cache`; `api-docs/` belongs to the api pipeline and is never touched. Only `/index.html` is invalidated (every SPA route is served from it).
 
 ## Git workflow
 

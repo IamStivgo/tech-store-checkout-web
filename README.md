@@ -60,15 +60,25 @@ Requisitos: Node.js 24 (`nvm use`).
 npm ci
 ```
 
-| Script                 | Descripción                                                             |
-| ---------------------- | ----------------------------------------------------------------------- |
-| `npm run lint`         | ESLint con reglas estrictas de TypeScript, React, accesibilidad y capas |
-| `npm run lint:styles`  | Stylelint sobre los archivos SCSS                                       |
-| `npm run format:check` | Verifica el formato con Prettier                                        |
-| `npm run format`       | Aplica el formato con Prettier                                          |
-| `npm test`             | Pruebas con Jest y umbrales de cobertura                                |
-| `npm run typecheck`    | Verifica los tipos con TypeScript                                       |
-| `npm run build`        | Genera el build de producción en `dist/`                                |
+| Script                   | Descripción                                                                            |
+| ------------------------ | -------------------------------------------------------------------------------------- |
+| `npm run lint`           | ESLint con reglas estrictas de TypeScript, React, accesibilidad y capas                |
+| `npm run lint:styles`    | Stylelint sobre los archivos SCSS                                                      |
+| `npm run format:check`   | Verifica el formato con Prettier                                                       |
+| `npm run format`         | Aplica el formato con Prettier                                                         |
+| `npm test`               | Pruebas con Jest y umbrales de cobertura                                               |
+| `npm run typecheck`      | Verifica los tipos con TypeScript                                                      |
+| `npm run build`          | Genera el build de producción en `dist/`                                               |
+| `npm run contract:sync`  | Genera los tipos del API desde el `openapi.json` del release fijado en `contract.json` |
+| `npm run contract:check` | Verifica que los tipos generados coincidan con esa versión (se ejecuta en CI)          |
+
+## Contrato con el API
+
+El API publica su contrato OpenAPI en cada release ([tech-store-checkout-api](https://github.com/IamStivgo/tech-store-checkout-api/releases)). `contract.json` fija la versión que usa este frontend; `npm run contract:sync` descarga ese `openapi.json` y genera los tipos en `src/services/api/generated/api-contract.ts`, y el CI falla (`contract:check`) si no coinciden.
+
+## Despliegue
+
+`deploy.yml` se ejecuta cuando el CI de `main` termina en verde (o manualmente), tras la aprobación del environment `production`, con un rol OIDC de AWS (secret `AWS_DEPLOY_ROLE_ARN`, sin llaves). Lee el bucket, la distribución y la URL de los parámetros SSM `/checkout-app/prod/deploy/*`, sube los assets con hash como inmutables e `index.html` sin caché, invalida `/index.html` y prueba la URL pública (`/`, una ruta de la SPA, `/api/v1/health` y los headers de seguridad).
 
 ## Flujo de trabajo
 
