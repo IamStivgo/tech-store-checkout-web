@@ -1,8 +1,8 @@
+import type { CardBrand } from '../../../utils/card';
 import { Icon } from '../Icon';
 
 import styles from './CardBrandIcon.module.scss';
 
-export type CardBrand = 'VISA' | 'MASTERCARD' | 'UNKNOWN';
 export type CardBrandIconSize = 'sm' | 'md';
 
 export interface CardBrandIconProps {
