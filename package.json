@@ -1,6 +1,6 @@
 {
   "name": "tech-store-checkout-web",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Mobile-first checkout SPA for a tech accessories store with credit card payments.",
   "license": "UNLICENSED",
@@ -18,6 +18,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc -b",
+    "contract:sync": "node scripts/contract.js sync",
+    "contract:check": "node scripts/contract.js check",
     "test": "NODE_OPTIONS='--experimental-vm-modules --disable-warning=ExperimentalWarning' jest --coverage",
     "prepare": "husky"
   },

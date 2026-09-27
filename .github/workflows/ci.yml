@@ -47,6 +47,10 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
+      # The API types must match the api release pinned in contract.json.
+      - name: Check API contract
+        run: npm run contract:check
+
       - name: Test with coverage thresholds
         run: npm test
 
