@@ -1,0 +1,106 @@
+name: Deploy
+
+# Deploys what CI has just verified on main; can also be re-run by hand.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-web-prod
+  cancel-in-progress: false
+
+env:
+  HUSKY: '0'
+
+jobs:
+  deploy:
+    name: Deploy to production
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # Requires the reviewer's approval, and only main may deploy to production.
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: deploy-web-${{ github.run_id }}
+          mask-aws-account-id: true
+
+      # Resource names come from the infrastructure, never from this repository.
+      - name: Read deploy parameters
+        run: |
+          read_parameter() {
+            aws ssm get-parameter --name "/checkout-app/prod/deploy/$1" --query Parameter.Value --output text
+          }
+          {
+            echo "SPA_BUCKET=$(read_parameter spa-bucket)"
+            echo "DISTRIBUTION_ID=$(read_parameter distribution-id)"
+            echo "APP_URL=$(read_parameter app-url)"
+          } >> "$GITHUB_ENV"
+
+      # Hashed assets are immutable and kept from previous releases, so open tabs keep working;
+      # index.html is always revalidated. api-docs/ belongs to the api pipeline.
+      - name: Upload to S3
+        run: |
+          aws s3 sync dist/assets/ "s3://${SPA_BUCKET}/assets/" \
+            --cache-control "public, max-age=31536000, immutable" --only-show-errors
+          aws s3 sync dist/ "s3://${SPA_BUCKET}/" --delete \
+            --exclude "assets/*" --exclude "api-docs/*" --exclude "index.html" \
+            --cache-control "public, max-age=3600" --only-show-errors
+          aws s3 cp dist/index.html "s3://${SPA_BUCKET}/index.html" \
+            --cache-control "no-cache" --only-show-errors
+
+      # Every SPA route is served as /index.html by the router function, so one path is enough.
+      - name: Invalidate index.html
+        run: |
+          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" \
+            --paths "/index.html" > /dev/null
+
+      - name: Smoke test
+        run: |
+          check() {
+            local path="$1" pattern="$2"
+            for attempt in 1 2 3 4 5; do
+              if curl -fsS "${APP_URL}${path}" | grep -q "$pattern"; then
+                echo "OK ${path}" | tee -a "$GITHUB_STEP_SUMMARY"
+                return 0
+              fi
+              sleep $((attempt * 5))
+            done
+            echo "FAILED ${path}" >&2
+            return 1
+          }
+          check / 'id="root"'
+          check /productos/smoke-test 'id="root"'
+          check /api/v1/health '"status":"ok"'
+          curl -fsSI "${APP_URL}/" | grep -qi '^content-security-policy:'
+          echo "OK security headers" | tee -a "$GITHUB_STEP_SUMMARY"

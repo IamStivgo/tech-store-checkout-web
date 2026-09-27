@@ -1,0 +1,16 @@
+@use '../../../styles/abstracts' as *;
+
+.footer {
+  padding-block: var(--space-6);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border);
+}
+
+.inner {
+  @include page-container;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
