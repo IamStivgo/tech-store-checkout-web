@@ -3,9 +3,11 @@ import { Outlet, type createBrowserRouter, type RouteObject } from 'react-router
 import { RouterProvider } from 'react-router/dom';
 
 import { MainLayout } from './components/templates/MainLayout';
+import { ROUTES } from './config/routes';
 import { messages } from './data/messages.es-CO';
 import { CatalogPage } from './modules/catalog';
 import { NotFoundPage } from './modules/not-found';
+import { ProductPage } from './modules/product';
 import type { AppStore } from './store/store';
 
 export type AppRouter = ReturnType<typeof createBrowserRouter>;
@@ -28,6 +30,7 @@ export const appRoutes: RouteObject[] = [
     element: <RootLayout />,
     children: [
       { index: true, element: <CatalogPage /> },
+      { path: ROUTES.product, element: <ProductPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

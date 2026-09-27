@@ -1,9 +1,11 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 
+import { checkoutSlice } from '../modules/checkout';
 import { baseApi } from '../services/api/base-api';
 
 const rootReducer = combineReducers({
   [baseApi.reducerPath]: baseApi.reducer,
+  [checkoutSlice.reducerPath]: checkoutSlice.reducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

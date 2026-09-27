@@ -19,12 +19,33 @@ export const messages = {
   stock: {
     inStock: (units: number) => `${units} disponibles`,
     lowStock: (units: number) => `Últimas ${units}`,
+    inStockDetail: (units: number) => `En stock · ${units} unidades`,
+    lowStockDetail: (units: number) => `Últimas ${units} unidades`,
     outOfStock: 'Agotado',
+  },
+  product: {
+    back: 'Tienda',
+    vatIncluded: 'IVA incluido',
+    quantity: 'Cantidad',
+    decreaseQuantity: 'Disminuir cantidad',
+    increaseQuantity: 'Aumentar cantidad',
+    quantityMax: (units: number) => `Máximo ${units} por pedido`,
+    fees: (serviceFee: string) =>
+      `Se suman ${serviceFee} de tarifa de servicio y el envío según tu ciudad.`,
+    freeShipping: (threshold: string) =>
+      `Envío gratis en compras desde ${threshold} (excepto trayectos especiales).`,
+    payWithCard: 'Pagar con tarjeta de crédito',
+    soldOut: 'Agotado',
+    error: 'No pudimos cargar el producto.',
   },
   notFound: {
     page: {
       title: 'Página no encontrada',
       body: 'Revisa el enlace o vuelve a la tienda.',
+    },
+    product: {
+      title: 'Producto no encontrado',
+      body: 'Es posible que el enlace esté incompleto o que el producto ya no esté disponible.',
     },
   },
   common: {

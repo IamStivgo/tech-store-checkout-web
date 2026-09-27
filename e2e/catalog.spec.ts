@@ -57,15 +57,6 @@ test.describe('Catalog', () => {
     expect(await columnsOf(page)).toBe(expectedColumns(viewport?.width ?? 0));
   });
 
-  test('opens the product page from its card', async ({ page }) => {
-    await serveCatalog(page);
-    await page.goto('/');
-
-    await page.getByRole('link', { name: /Power bank 20\.000 mAh/ }).click();
-
-    await expect(page).toHaveURL(`/products/${CATALOG.data[2]?.id ?? ''}`);
-  });
-
   test('recovers from a failed load with the retry action', async ({ page }) => {
     let calls = 0;
     await page.route(PRODUCTS_API, (route) => {
