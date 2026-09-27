@@ -15,7 +15,18 @@ import type { ApiError } from '../../../../services/api/api-error';
 import type { ProductDetail } from '../../../../services/api/contract';
 import { useGetProductQuery } from '../../../../services/api/products.api';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
-import { checkoutStarted, quantitySelected, selectQuantityFor } from '../../../checkout';
+import { cardDigits, detectBrand } from '../../../../utils/card';
+import {
+  CheckoutModal,
+  checkoutClosed,
+  checkoutStarted,
+  detailsSubmitted,
+  quantitySelected,
+  selectCheckoutProductId,
+  selectCheckoutStep,
+  selectQuantityFor,
+  type CheckoutFormValues,
+} from '../../../checkout';
 import { NotFoundPage } from '../../../not-found';
 import { FeeDisclosure } from '../../components/FeeDisclosure';
 
@@ -65,8 +76,23 @@ function ProductPageSkeleton() {
   );
 }
 
+const LAST_FOUR = -4;
+
+// Only the brand and the last four digits leave the form (the card is tokenized in the browser).
+const toCheckoutDetails = ({ card, customer, shipping }: CheckoutFormValues) => {
+  const digits = cardDigits(card.number);
+  return {
+    customer,
+    shipping,
+    installments: card.installments,
+    card: { brand: detectBrand(digits), lastFour: digits.slice(LAST_FOUR) },
+  };
+};
+
 function ProductDetails({ product }: { readonly product: ProductDetail }) {
   const dispatch = useAppDispatch();
+  const step = useAppSelector(selectCheckoutStep);
+  const checkoutProductId = useAppSelector(selectCheckoutProductId);
   const selected = useAppSelector((state) => selectQuantityFor(state, product.id));
   const maxUnits = product.maxUnitsPerOrder;
   const available = maxUnits > 0;
@@ -108,6 +134,13 @@ function ProductDetails({ product }: { readonly product: ProductDetail }) {
           onClick={() => dispatch(checkoutStarted({ productId: product.id, quantity }))}
         />
       </div>
+      <CheckoutModal
+        open={step === 'DETAILS' && checkoutProductId === product.id}
+        onClose={() => dispatch(checkoutClosed())}
+        onSubmit={(values) => {
+          dispatch(detailsSubmitted(toCheckoutDetails(values)));
+        }}
+      />
     </div>
   );
 }
