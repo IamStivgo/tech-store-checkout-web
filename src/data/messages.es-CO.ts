@@ -85,7 +85,6 @@ export const messages = {
       recipientPhone: 'Teléfono de contacto',
       notes: 'Indicaciones para la entrega (opcional)',
       notesPlaceholder: 'Ej.: portería 24 horas',
-      notesCounter: (length: number, max: number) => `${length}/${max}`,
     },
     errorSummary: (count: number) => `Revisa los campos marcados (${count}).`,
     continue: 'Continuar',
