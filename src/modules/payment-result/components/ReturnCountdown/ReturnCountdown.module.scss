@@ -1,0 +1,18 @@
+@use '../../../../styles/abstracts' as *;
+
+.countdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: center;
+}
+
+.text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.status {
+  @include visually-hidden;
+}
