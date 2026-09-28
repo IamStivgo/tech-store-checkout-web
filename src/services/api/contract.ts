@@ -14,5 +14,7 @@ export type Department = Schemas['Department'];
 export type DepartmentList = Schemas['DepartmentList'];
 export type City = Schemas['City'];
 export type CityList = Schemas['CityList'];
+export type CheckoutQuote = Schemas['CheckoutQuote'];
+export type DeliveryQuote = Schemas['DeliveryQuote'];
 export type ProblemDetails = Schemas['ProblemDetails'];
 export type FieldError = Schemas['FieldError'];
