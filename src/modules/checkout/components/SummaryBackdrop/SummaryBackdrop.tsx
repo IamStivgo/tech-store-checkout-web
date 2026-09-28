@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import { Button } from '../../../../components/atoms/Button';
 import { CardBrandIcon } from '../../../../components/atoms/CardBrandIcon';
 import { Icon } from '../../../../components/atoms/Icon';
@@ -7,13 +9,15 @@ import {
 } from '../../../../components/atoms/ResponsiveImage';
 import { Skeleton } from '../../../../components/atoms/Skeleton';
 import { Banner } from '../../../../components/molecules/Banner';
+import { CheckboxField } from '../../../../components/molecules/CheckboxField';
 import { Backdrop } from '../../../../components/organisms/Backdrop';
 import { PriceBreakdown } from '../../../../components/organisms/PriceBreakdown';
 import { installmentsLabel } from '../../../../data/installments';
 import { messages } from '../../../../data/messages.es-CO';
 import { useGetQuoteQuery } from '../../../../services/api/checkout.api';
-import type { CheckoutQuote } from '../../../../services/api/contract';
+import type { AcceptanceTokens, CheckoutQuote } from '../../../../services/api/contract';
 import { useListCitiesQuery } from '../../../../services/api/locations.api';
+import { useGetAcceptanceTokensQuery } from '../../../../services/api/payments.api';
 import { deliveryEstimate } from '../../../../utils/date/delivery-dates';
 import { formatCop } from '../../../../utils/format-currency';
 import type { CheckoutDetails } from '../../store/checkout.slice';
@@ -33,15 +37,57 @@ export interface SummaryBackdropProps {
   readonly quantity: number;
   readonly details: CheckoutDetails;
   readonly onEdit: () => void;
-  readonly onPay: (quote: CheckoutQuote) => void;
+  readonly onPay: (quote: CheckoutQuote, acceptance: AcceptanceTokens) => void;
   readonly paying?: boolean;
   /** Shown over the pay button when the payment could not be sent. */
   readonly paymentFailed?: boolean;
+  /** Why the last payment attempt failed, shown over the pay button. */
+  readonly paymentError?: string;
   /** Purchase date for the delivery estimate (injectable for tests). */
   readonly now?: () => Date;
 }
 
 const THUMBNAIL_SIZE = '48px';
+const ACCEPTANCES = ['endUserPolicy', 'personalDataAuth'] as const;
+type Acceptance = (typeof ACCEPTANCES)[number];
+const NOTHING_ACCEPTED: Record<Acceptance, boolean> = {
+  endUserPolicy: false,
+  personalDataAuth: false,
+};
+
+function AcceptanceSection({
+  tokens,
+  accepted,
+  showRequired,
+  onChange,
+}: {
+  readonly tokens: AcceptanceTokens;
+  readonly accepted: Record<Acceptance, boolean>;
+  readonly showRequired: boolean;
+  readonly onChange: (acceptance: Acceptance, checked: boolean) => void;
+}) {
+  const { acceptance } = messages.summary;
+  return (
+    <div className={styles.acceptance}>
+      {ACCEPTANCES.map((key) => (
+        <CheckboxField
+          key={key}
+          label={acceptance[key]}
+          checked={accepted[key]}
+          onChange={(event) => {
+            onChange(key, event.target.checked);
+          }}
+          link={{
+            href: tokens[key].permalink,
+            text: acceptance.read,
+            newTabHint: acceptance.newTab,
+          }}
+          error={showRequired && !accepted[key] ? acceptance.required : undefined}
+        />
+      ))}
+    </div>
+  );
+}
 
 function Breakdown({ quote, city }: { readonly quote: CheckoutQuote; readonly city: string }) {
   const { quantity, delivery } = quote;
@@ -80,11 +126,17 @@ export function SummaryBackdrop({
   onPay,
   paying = false,
   paymentFailed = false,
+  paymentError,
   now = () => new Date(),
 }: SummaryBackdropProps) {
   const { departmentCode, cityCode } = details.shipping;
   const quote = useGetQuoteQuery({ productId: product.id, quantity, cityCode }, { skip: !open });
   const cities = useListCitiesQuery(departmentCode, { skip: !open });
+  // Single-use: fetched every time the summary opens and after each failed attempt.
+  const acceptance = useGetAcceptanceTokensQuery(undefined, { skip: !open });
+  const [accepted, setAccepted] = useState(NOTHING_ACCEPTED);
+  const [showRequired, setShowRequired] = useState(false);
+  const allAccepted = ACCEPTANCES.every((key) => accepted[key]);
   const city = cities.data?.data.find(({ code }) => code === cityCode)?.name ?? '';
 
   const estimate = quote.data && deliveryEstimate(now(), quote.data.delivery.estimatedBusinessDays);
@@ -115,16 +167,20 @@ export function SummaryBackdrop({
       }
       footer={
         <div className={styles.footer}>
-          {paymentFailed && <Banner variant="danger">{messages.summary.serviceUnavailable}</Banner>}
+          {(paymentError ?? paymentFailed) && (
+            <Banner variant="danger">{paymentError ?? messages.summary.serviceUnavailable}</Banner>
+          )}
           <Button
             size="lg"
             fullWidth
-            disabled={!quote.data || paying}
+            disabled={!quote.data || !acceptance.data || paying}
             loading={paying}
             loadingText={messages.summary.processing}
             onClick={() => {
-              if (quote.data) {
-                onPay(quote.data);
+              if (!allAccepted) {
+                setShowRequired(true);
+              } else if (quote.data && acceptance.data) {
+                onPay(quote.data, acceptance.data);
               }
             }}
           >
@@ -175,6 +231,29 @@ export function SummaryBackdrop({
                   : messages.summary.etaRange(estimate.first, estimate.last)}
               </span>
             </p>
+          )}
+          {acceptance.isError && (
+            <Banner
+              variant="danger"
+              action={{
+                label: messages.common.retry,
+                onClick: () => {
+                  void acceptance.refetch();
+                },
+              }}
+            >
+              {messages.summary.acceptance.error}
+            </Banner>
+          )}
+          {acceptance.data && (
+            <AcceptanceSection
+              tokens={acceptance.data}
+              accepted={accepted}
+              showRequired={showRequired}
+              onChange={(key, checked) => {
+                setAccepted((current) => ({ ...current, [key]: checked }));
+              }}
+            />
           )}
         </div>
       )}

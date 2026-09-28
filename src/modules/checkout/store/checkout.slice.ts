@@ -93,6 +93,13 @@ export const checkoutSlice = createSlice({
     draftSaved(state, { payload }: PayloadAction<CheckoutDraft>) {
       state.draft = payload;
     },
+    detailsEdited(state) {
+      state.step = 'DETAILS';
+    },
+    /** The payment was sent: the next purchase starts from scratch. */
+    paymentCompleted() {
+      return initialState;
+    },
   },
   selectors: {
     selectCheckoutStep: (state) => state.step,
@@ -106,8 +113,15 @@ export const checkoutSlice = createSlice({
   },
 });
 
-export const { quantitySelected, checkoutStarted, checkoutClosed, detailsSubmitted, draftSaved } =
-  checkoutSlice.actions;
+export const {
+  quantitySelected,
+  checkoutStarted,
+  checkoutClosed,
+  detailsSubmitted,
+  detailsEdited,
+  draftSaved,
+  paymentCompleted,
+} = checkoutSlice.actions;
 export const {
   selectCardReentryRequired,
   selectCheckoutDraft,

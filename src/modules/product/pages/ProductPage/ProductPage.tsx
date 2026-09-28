@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { useCallback, useRef, useState } from 'react';
+import { generatePath, Link, useNavigate, useParams } from 'react-router';
 
 import { Divider } from '../../../../components/atoms/Divider';
 import { Icon } from '../../../../components/atoms/Icon';
@@ -13,16 +13,25 @@ import { ProductGallery } from '../../../../components/organisms/ProductGallery'
 import { ROUTES } from '../../../../config/routes';
 import { messages } from '../../../../data/messages.es-CO';
 import type { ApiError } from '../../../../services/api/api-error';
-import type { ProductDetail } from '../../../../services/api/contract';
+import type {
+  AcceptanceTokens,
+  CheckoutQuote,
+  ProductDetail,
+} from '../../../../services/api/contract';
+import { paymentsApi } from '../../../../services/api/payments.api';
 import { useGetProductQuery } from '../../../../services/api/products.api';
+import type { CardInput } from '../../../../services/tokenization/card-tokenizer';
+import { useCardTokenizer } from '../../../../services/tokenization/card-tokenizer-context';
 import { useAppDispatch, useAppSelector, useAppStore } from '../../../../store/hooks';
-import { cardDigits, detectBrand } from '../../../../utils/card';
+import { cardDigits, detectBrand, parseExpiry } from '../../../../utils/card';
 import {
   CheckoutModal,
   checkoutClosed,
   checkoutStarted,
+  detailsEdited,
   detailsSubmitted,
   draftSaved,
+  paymentCompleted,
   quantitySelected,
   selectCardReentryRequired,
   selectCheckoutDetails,
@@ -30,7 +39,10 @@ import {
   selectCheckoutProductId,
   selectCheckoutStep,
   selectQuantityFor,
+  SummaryBackdrop,
+  useCheckoutPayment,
   type CheckoutDetails,
+  type CheckoutPaymentResult,
   type CheckoutDraft,
   type CheckoutFormValues,
 } from '../../../checkout';
@@ -96,6 +108,32 @@ const toCheckoutDetails = ({ card, customer, shipping }: CheckoutFormValues) => 
   };
 };
 
+const TWO_DIGITS = 2;
+const twoDigits = (value: number) => String(value % 100).padStart(TWO_DIGITS, '0');
+
+// The form already validated the card: only its shape changes for the provider.
+const toCardInput = ({ number, cvc, expiry, holder }: CheckoutFormValues['card']): CardInput => {
+  const { month, year } = parseExpiry(expiry) ?? { month: 0, year: 0 };
+  return {
+    number: cardDigits(number),
+    cvc,
+    expMonth: twoDigits(month),
+    expYear: twoDigits(year),
+    holder,
+  };
+};
+
+type PaymentFailure = Extract<CheckoutPaymentResult, { ok: false }>;
+
+const paymentErrorMessage = ({ error }: PaymentFailure): string => {
+  if (error.code === 'INSUFFICIENT_STOCK' || error.code === 'QUANTITY_LIMIT_EXCEEDED') {
+    return messages.summary.paymentErrors.stock;
+  }
+  return error.code === 'PAYMENT_REJECTED_BY_PROVIDER'
+    ? messages.summary.paymentErrors.rejected
+    : messages.summary.serviceUnavailable;
+};
+
 // The form sent before a reload is shown again, except the card.
 const draftFromDetails = ({
   customer,
@@ -123,11 +161,62 @@ function ProductDetails({ product }: { readonly product: ProductDetail }) {
     (changed: CheckoutDraft) => dispatch(draftSaved(changed)),
     [dispatch],
   );
+  const details = useAppSelector(selectCheckoutDetails);
+  const tokenizer = useCardTokenizer();
+  // The card token only lives in memory: after a reload the buyer types the card again.
+  const cardToken = useRef<string | null>(null);
+  const [tokenError, setTokenError] = useState<string>();
+  const [paymentError, setPaymentError] = useState<string>();
+  const { pay, paying } = useCheckoutPayment();
+  const navigate = useNavigate();
   const selected = useAppSelector((state) => selectQuantityFor(state, product.id));
   const maxUnits = product.maxUnitsPerOrder;
   const available = maxUnits > 0;
   // The stock may have dropped since the quantity was chosen: never offer more than it allows.
   const quantity = available ? Math.min(selected, maxUnits) : 1;
+
+  const submitDetails = async (values: CheckoutFormValues) => {
+    setTokenError(undefined);
+    const result = await tokenizer.tokenize(toCardInput(values.card));
+    if (!result.ok) {
+      setTokenError(messages.checkout.tokenization[result.error]);
+      return;
+    }
+    cardToken.current = result.token.id;
+    setPaymentError(undefined);
+    dispatch(detailsSubmitted(toCheckoutDetails(values)));
+  };
+
+  const payOrder = async (paidDetails: CheckoutDetails, acceptance: AcceptanceTokens) => {
+    if (!cardToken.current) {
+      dispatch(detailsEdited());
+      return;
+    }
+    setPaymentError(undefined);
+    const result = await pay({
+      productId: product.id,
+      quantity,
+      details: paidDetails,
+      cardToken: cardToken.current,
+      acceptance,
+    });
+    // A timeout leaves the payment in the provider's hands: the result page follows it.
+    const transactionId = result.ok
+      ? result.transaction.id
+      : result.error.code === 'PAYMENT_PROVIDER_TIMEOUT'
+        ? result.transactionId
+        : undefined;
+    if (transactionId) {
+      cardToken.current = null;
+      dispatch(paymentCompleted());
+      void navigate(generatePath(ROUTES.paymentResult, { transactionId }));
+      return;
+    }
+    if (!result.ok) {
+      setPaymentError(paymentErrorMessage(result));
+      dispatch(paymentsApi.util.invalidateTags(['AcceptanceTokens']));
+    }
+  };
 
   return (
     <div className={styles.layout}>
@@ -167,13 +256,28 @@ function ProductDetails({ product }: { readonly product: ProductDetail }) {
       <CheckoutModal
         open={step === 'DETAILS' && checkoutProductId === product.id}
         onClose={() => dispatch(checkoutClosed())}
-        onSubmit={(values) => {
-          dispatch(detailsSubmitted(toCheckoutDetails(values)));
-        }}
+        onSubmit={submitDetails}
         initialValues={initialValues}
         cardReentryRequired={cardReentryRequired}
         onDraftChange={saveDraft}
+        submitError={tokenError}
       />
+      {details && (
+        <SummaryBackdrop
+          open={step === 'SUMMARY' && checkoutProductId === product.id}
+          product={{
+            id: product.id,
+            name: product.name,
+            image: product.images[0] ?? product.image,
+          }}
+          quantity={quantity}
+          details={details}
+          onEdit={() => dispatch(detailsEdited())}
+          onPay={(_quote: CheckoutQuote, acceptance) => void payOrder(details, acceptance)}
+          paying={paying}
+          paymentError={paymentError}
+        />
+      )}
     </div>
   );
 }

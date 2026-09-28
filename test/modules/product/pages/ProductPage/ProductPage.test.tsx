@@ -145,8 +145,8 @@ describe('ProductPage', () => {
       customer: { email: 'ana.gomez@example.com' },
       shipping: { cityCode: '11001' },
     });
-    expect(JSON.stringify(checkout)).not.toMatch(/4242 4242|4242424242424242|"123"/);
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(JSON.stringify(checkout)).not.toMatch(/4242 4242|4242424242424242|"123"|tok_/);
+    expect(screen.getByRole('dialog', { name: 'Resumen de pago' })).toBeInTheDocument();
   });
 
   it('reopens the form with the saved draft and keeps typing in the store', async () => {

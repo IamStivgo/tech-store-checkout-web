@@ -84,6 +84,8 @@ export interface CheckoutModalProps {
   readonly cardReentryRequired?: boolean;
   /** Receives what the buyer types (never the card) to keep it across reloads. */
   readonly onDraftChange?: (draft: CheckoutDraft) => void;
+  /** Why the card could not be tokenized after a valid submit. */
+  readonly submitError?: string;
 }
 
 /** Step 2 of the checkout: card, customer and delivery data in one validated form. */
@@ -95,6 +97,7 @@ export function CheckoutModal({
   initialValues,
   cardReentryRequired = false,
   onDraftChange,
+  submitError,
 }: CheckoutModalProps) {
   const formId = useId();
   const schema = useMemo(() => createCheckoutFormSchema(now), [now]);
@@ -119,13 +122,15 @@ export function CheckoutModal({
     });
   }, [form, onDraftChange]);
 
-  const focusFirstInvalidField = () => {
-    // Runs after React renders the errors, when the fields carry aria-invalid.
-    requestAnimationFrame(() => {
+  const { isSubmitted, isSubmitting, errors, submitCount } = form.formState;
+
+  // After each submit, once React has rendered the errors (aria-invalid), focus the first one
+  // in visual order: React Hook Form would focus in registration order instead.
+  useEffect(() => {
+    if (submitCount > 0) {
       formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
-    });
-  };
-  const { isSubmitted, isSubmitting, errors } = form.formState;
+    }
+  }, [submitCount]);
   const errorCount = countErrors(errors);
 
   return (
@@ -153,8 +158,9 @@ export function CheckoutModal({
           id={formId}
           className={styles.form}
           noValidate
-          onSubmit={(event) => void form.handleSubmit(onSubmit, focusFirstInvalidField)(event)}
+          onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
         >
+          {submitError && <Banner variant="danger">{submitError}</Banner>}
           {isSubmitted && errorCount > 0 && (
             <Banner variant="danger">{messages.checkout.errorSummary(errorCount)}</Banner>
           )}
