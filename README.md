@@ -122,6 +122,19 @@ Por defecto la tarjeta se tokeniza con un tokenizador falso que solo funciona co
 | `npm run test:e2e`       | Pruebas E2E con Playwright (en Ubuntu 20.04, dentro de la imagen oficial de Docker)    |
 | `npm run images:build`   | Genera las imágenes de producto desde las ilustraciones SVG                            |
 
+### Ejecución local con Docker
+
+La tienda completa (web, API y DynamoDB Local) sin Node.js ni cuenta de AWS. Necesita el repositorio del API clonado al lado de este (`../tech-store-checkout-api`), porque este `docker-compose.yml` incluye el suyo:
+
+```bash
+docker compose up --build    # http://localhost:8080 (WEB_PORT=8088 para usar otro puerto)
+docker compose down -v       # detiene todo y borra los datos
+```
+
+- `web`: build de Vite servido por nginx sin privilegios (`Dockerfile` multi-stage), con las rutas de la SPA, `/api` redirigido al contenedor del API (mismo origen que en producción) y los headers de seguridad.
+- `api`, `api-init` y `dynamodb`: el stack del repositorio del API, con las tablas y el catálogo creados automáticamente.
+- Pagos con la pasarela falsa, sin llamar a la real: `4242 4242 4242 4242` → aprobado, `4111 1111 1111 1111` → rechazado.
+
 ## Contrato con el API
 
 El API publica su contrato OpenAPI en cada release ([tech-store-checkout-api](https://github.com/IamStivgo/tech-store-checkout-api/releases)). `contract.json` fija la versión que usa este frontend; `npm run contract:sync` descarga ese `openapi.json` y genera los tipos en `src/services/api/generated/api-contract.ts`, y el CI falla (`contract:check`) si no coinciden.
