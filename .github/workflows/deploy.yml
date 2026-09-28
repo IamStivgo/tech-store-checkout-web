@@ -81,7 +81,14 @@ jobs:
             --cache-control "public, max-age=31536000, immutable" --only-show-errors
           aws s3 sync dist/ "s3://${SPA_BUCKET}/" --delete \
             --exclude "assets/*" --exclude "api-docs/*" --exclude "index.html" \
+            --exclude "*.avif" --exclude "*.webp" \
             --cache-control "public, max-age=3600" --only-show-errors
+          # The CLI may not know these media types: without them browsers do not show the images.
+          for format in avif webp; do
+            aws s3 sync dist/ "s3://${SPA_BUCKET}/" --delete \
+              --exclude "*" --include "images/*.${format}" --include "images/**/*.${format}" \
+              --content-type "image/${format}" --cache-control "public, max-age=3600" --only-show-errors
+          done
           aws s3 cp dist/index.html "s3://${SPA_BUCKET}/index.html" \
             --cache-control "no-cache" --only-show-errors
 
