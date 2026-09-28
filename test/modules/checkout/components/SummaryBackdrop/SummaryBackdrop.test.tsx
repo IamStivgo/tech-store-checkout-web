@@ -76,9 +76,18 @@ const CITIES = {
   meta: { count: 1 },
 };
 
-/** Answers by URL, since the quote and the cities are requested at the same time. */
-const serveApi = (quotes: readonly (CheckoutQuote | 'error')[]) => {
+const ACCEPTANCE = {
+  endUserPolicy: { acceptanceToken: 'a.b.c', permalink: 'https://docs.example/terms.pdf' },
+  personalDataAuth: { acceptanceToken: 'd.e.f', permalink: 'https://docs.example/data.pdf' },
+};
+
+/** Answers by URL, since the quote, the cities and the acceptances are requested together. */
+const serveApi = (
+  quotes: readonly (CheckoutQuote | 'error')[],
+  acceptances: readonly (typeof ACCEPTANCE | 'error')[] = [ACCEPTANCE],
+) => {
   const pending = [...quotes];
+  const pendingAcceptances = [...acceptances];
   return jest.spyOn(globalThis, 'fetch').mockImplementation((input) => {
     const { url } = input as Request;
     const json = (body: unknown, status = 200) =>
@@ -90,6 +99,12 @@ const serveApi = (quotes: readonly (CheckoutQuote | 'error')[]) => {
       );
     if (url.includes('/cities')) {
       return json(CITIES);
+    }
+    if (url.includes('/payments/acceptance-tokens')) {
+      const acceptance = pendingAcceptances.shift() ?? ACCEPTANCE;
+      return acceptance === 'error'
+        ? json({ status: 502, code: 'PAYMENT_PROVIDER_UNAVAILABLE' }, 502)
+        : json(acceptance);
     }
     const next = pending.shift() ?? 'error';
     return next === 'error' ? json({ status: 500, code: 'INTERNAL_ERROR' }, 500) : json(next);
@@ -155,13 +170,53 @@ describe('SummaryBackdrop', () => {
     serveApi([E1_QUOTE]);
     const { onEdit, onPay, user } = renderSummary();
     await screen.findByText('Total');
+    await user.click(await screen.findByRole('checkbox', { name: /términos y condiciones/ }));
+    await user.click(screen.getByRole('checkbox', { name: /datos personales/ }));
 
     await user.click(payButton());
     await user.click(screen.getByRole('button', { name: 'Editar' }));
     await user.keyboard('{Escape}');
 
-    expect(onPay).toHaveBeenCalledWith(E1_QUOTE);
+    expect(onPay).toHaveBeenCalledWith(E1_QUOTE, ACCEPTANCE);
     expect(onEdit).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks to accept both documents before paying', async () => {
+    serveApi([E1_QUOTE]);
+    const { onPay, user } = renderSummary();
+    const terms = await screen.findByRole('checkbox', { name: /términos y condiciones/ });
+    await user.click(terms);
+
+    await user.click(payButton());
+
+    expect(onPay).not.toHaveBeenCalled();
+    expect(screen.getByRole('checkbox', { name: /datos personales/ })).toHaveAccessibleDescription(
+      /Debes aceptarlo para pagar/,
+    );
+    expect(terms).not.toHaveAccessibleDescription(/Debes aceptarlo/);
+    expect(screen.getAllByRole('link', { name: /Leer documento/ })[0]).toHaveAttribute(
+      'href',
+      ACCEPTANCE.endUserPolicy.permalink,
+    );
+  });
+
+  it('offers to retry when the documents to accept cannot be loaded', async () => {
+    serveApi([E1_QUOTE], ['error', ACCEPTANCE]);
+    const { user } = renderSummary();
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('No pudimos cargar los documentos que debes aceptar.');
+    expect(payButton()).toBeDisabled();
+    await user.click(within(alert).getByRole('button', { name: 'Reintentar' }));
+
+    expect(await screen.findByRole('checkbox', { name: /datos personales/ })).toBeInTheDocument();
+  });
+
+  it('explains why the last payment failed', async () => {
+    serveApi([E1_QUOTE]);
+    renderSummary({ paymentError: 'La pasarela rechazó el pago.' });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('La pasarela rechazó el pago.');
   });
 
   it('keeps the pay button disabled while the total is being calculated', () => {

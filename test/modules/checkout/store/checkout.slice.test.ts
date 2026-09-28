@@ -5,7 +5,9 @@ import {
   selectCheckoutDraft,
   checkoutClosed,
   checkoutStarted,
+  detailsEdited,
   detailsSubmitted,
+  paymentCompleted,
   quantitySelected,
   selectCheckoutDetails,
   selectCheckoutProductId,
@@ -81,6 +83,20 @@ describe('checkout slice', () => {
 
     expect(selectCheckoutStep(store.getState())).toBe('SUMMARY');
     expect(selectCheckoutDetails(store.getState())).toEqual(details);
+  });
+
+  it('goes back from the summary to edit the details and starts over once paid', () => {
+    const store = createAppStore();
+    store.dispatch(checkoutStarted({ productId: PRODUCT_ID, quantity: 2 }));
+    store.dispatch(detailsEdited());
+
+    expect(selectCheckoutStep(store.getState())).toBe('DETAILS');
+
+    store.dispatch(paymentCompleted());
+
+    expect(selectCheckoutStep(store.getState())).toBe('PRODUCT');
+    expect(selectCheckoutProductId(store.getState())).toBeNull();
+    expect(selectCheckoutDetails(store.getState())).toBeNull();
   });
 
   it('keeps the draft of the form', () => {
