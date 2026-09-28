@@ -99,3 +99,15 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The full stack needs the api repository next to this one; here only the image is built.
+      - name: Build the image
+        run: docker build --tag tech-store-checkout-web:ci .
