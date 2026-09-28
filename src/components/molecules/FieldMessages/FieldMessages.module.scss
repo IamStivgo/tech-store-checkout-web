@@ -1,0 +1,22 @@
+.hint,
+.error {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+}
+
+.hint {
+  color: var(--color-text-muted);
+}
+
+.error {
+  display: flex;
+  gap: var(--space-1);
+  align-items: flex-start;
+  color: var(--color-danger);
+
+  svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+}

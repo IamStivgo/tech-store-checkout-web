@@ -15,7 +15,7 @@ Mobile-first checkout SPA for a tech accessories store. The user picks a product
 - All business state lives in Redux (Flux). Contexts hold no business state.
 - `src/config/env.ts` is the only place that reads `import.meta.env`.
 - These rules are enforced by `eslint-plugin-boundaries`; do not disable them.
-- Each component lives in its own folder: `Button/Button.tsx`, `Button.module.scss`, `Button.test.tsx`, `index.ts`.
+- Each component lives in its own folder: `Button/Button.tsx`, `Button.module.scss`, `index.ts`. Its test lives in `test/`, mirroring `src/` (`test/components/atoms/Button/Button.test.tsx`).
 
 ## Code conventions
 
@@ -28,7 +28,9 @@ Mobile-first checkout SPA for a tech accessories store. The user picks a product
 ## Testing
 
 - Jest + React Testing Library + user-event. Test behavior from the user's perspective, following the AAA pattern.
+- Tests never live in `src/`: they go in `test/` with the same path as the file they test and import it relatively. `tsconfig.test.json` type-checks them with the app settings; `tsconfig.jest.json` only adapts them for ts-jest (CommonJS).
 - Components in `src/components/` are tested with props only (no store, no API).
+- E2E: Playwright in `e2e/` (`npm run test:e2e`) on iPhone SE (WebKit), Pixel 7 (Chromium) and desktop Firefox at 1440 px. It builds and serves `dist/` with `vite preview` and replaces the API per test with `page.route` and the fixtures in `e2e/fixtures/`. The CI job runs in the official Playwright image, whose version must match `@playwright/test`.
 - Coverage gates: statements, lines and functions ≥ 85 %, branches ≥ 81 %.
 
 ## Security and compliance (mandatory)
@@ -50,9 +52,10 @@ npm run lint:styles
 npm run format:check
 npm run contract:check  # API types match the api release pinned in contract.json
 npm run build
+npm run test:e2e        # Playwright; needs its browsers (npx playwright install)
 ```
 
-CI (`.github/workflows/ci.yml`) runs all of the above plus `npm audit` on every pull request and push to `develop` and `main`. Actions are pinned by commit SHA.
+CI (`.github/workflows/ci.yml`) runs all of the above plus `npm audit` on every pull request and push to `develop` and `main`. Actions and the Playwright image are pinned by SHA.
 
 ## API contract
 

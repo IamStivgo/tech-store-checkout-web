@@ -19,7 +19,13 @@ const SHARED = ['utils', 'config', 'styles', 'assets'];
 
 export default tseslint.config(
   {
-    ignores: ['dist/', 'coverage/', 'src/services/api/generated/'],
+    ignores: [
+      'dist/',
+      'coverage/',
+      'test-results/',
+      'playwright-report/',
+      'src/services/api/generated/',
+    ],
   },
   eslint.configs.recommended,
   tseslint.configs.strictTypeChecked,
@@ -128,7 +134,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['vite.config.ts'],
+    files: ['vite.config.ts', 'playwright.config.ts'],
     rules: {
       'import/no-default-export': 'off',
     },

@@ -12,15 +12,15 @@ SPA mobile-first en React + Redux Toolkit para comprar accesorios tecnológicos 
 
 ## Stack
 
-| Componente  | Elección                                                           |
-| ----------- | ------------------------------------------------------------------ |
-| Framework   | React 19 + TypeScript (modo estricto)                              |
-| Build       | Vite                                                               |
-| Estado      | Redux Toolkit (Flux) + RTK Query                                   |
-| Rutas       | React Router                                                       |
-| Formularios | React Hook Form + Zod                                              |
-| Estilos     | SCSS Modules + CSS custom properties (sin librería de componentes) |
-| Pruebas     | Jest + React Testing Library                                       |
+| Componente  | Elección                                                              |
+| ----------- | --------------------------------------------------------------------- |
+| Framework   | React 19 + TypeScript (modo estricto)                                 |
+| Build       | Vite                                                                  |
+| Estado      | Redux Toolkit (Flux) + RTK Query                                      |
+| Rutas       | React Router                                                          |
+| Formularios | React Hook Form + Zod                                                 |
+| Estilos     | SCSS Modules + CSS custom properties (sin librería de componentes)    |
+| Pruebas     | Jest + React Testing Library, en `test/` con la misma ruta que `src/` |
 
 ## Arquitectura: Atomic Design híbrido
 

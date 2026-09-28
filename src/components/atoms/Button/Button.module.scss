@@ -1,0 +1,100 @@
+@use '../../../styles/abstracts' as *;
+
+.button {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: center;
+  padding-inline: var(--space-5);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  transition:
+    background-color var(--duration-fast) var(--easing-standard),
+    border-color var(--duration-fast) var(--easing-standard),
+    color var(--duration-fast) var(--easing-standard);
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  &:disabled {
+    color: var(--color-disabled-text);
+    cursor: not-allowed;
+    background-color: var(--color-disabled-bg);
+    border-color: var(--color-disabled-border);
+  }
+
+  &[aria-busy='true'] {
+    cursor: progress;
+  }
+}
+
+.md {
+  min-height: 48px;
+}
+
+.lg {
+  min-height: 52px;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.primary:not(:disabled) {
+  color: var(--color-primary-contrast);
+  background-color: var(--color-primary);
+
+  &:hover {
+    background-color: var(--color-primary-hover);
+  }
+
+  &:active {
+    background-color: var(--color-primary-strong);
+  }
+}
+
+.secondary:not(:disabled) {
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border-color: var(--color-border-strong);
+
+  &:hover {
+    background-color: var(--color-surface-muted);
+  }
+}
+
+.ghost:not(:disabled) {
+  color: var(--color-primary);
+  background-color: transparent;
+
+  &:hover {
+    background-color: var(--color-primary-subtle);
+  }
+}
+
+// On the dark back layer of the Backdrop.
+.inverse:not(:disabled) {
+  color: var(--color-primary-contrast);
+  background-color: transparent;
+  border-color: var(--color-primary-contrast);
+
+  &:focus-visible {
+    @include focus-ring(var(--color-focus-inverse));
+  }
+
+  &:hover {
+    background-color: rgb(255 255 255 / 12%);
+  }
+}
+
+// Busy buttons keep their variant colors instead of the disabled palette.
+.primary[aria-busy='true'] {
+  color: var(--color-primary-contrast);
+  background-color: var(--color-primary);
+  border-color: transparent;
+}
