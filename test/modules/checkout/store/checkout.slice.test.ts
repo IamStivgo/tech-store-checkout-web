@@ -1,4 +1,8 @@
 import {
+  draftSaved,
+  restoreCheckout,
+  selectCardReentryRequired,
+  selectCheckoutDraft,
   checkoutClosed,
   checkoutStarted,
   detailsSubmitted,
@@ -77,5 +81,62 @@ describe('checkout slice', () => {
 
     expect(selectCheckoutStep(store.getState())).toBe('SUMMARY');
     expect(selectCheckoutDetails(store.getState())).toEqual(details);
+  });
+
+  it('keeps the draft of the form', () => {
+    const store = createAppStore();
+    const draft = {
+      customer: { fullName: 'Ana', email: '', phone: '', legalIdType: 'CC' as const, legalId: '' },
+      shipping: {
+        departmentCode: '',
+        cityCode: '',
+        addressLine1: '',
+        addressLine2: '',
+        postalCode: '',
+        notes: '',
+        useCustomerData: true,
+      },
+      installments: '1',
+    };
+
+    store.dispatch(draftSaved(draft));
+
+    expect(selectCheckoutDraft(store.getState())).toEqual(draft);
+  });
+
+  it('stops asking for the card again once the form is sent', () => {
+    const store = createAppStore({
+      checkout: restoreCheckout({
+        ...createAppStore().getState().checkout,
+        step: 'SUMMARY',
+      }),
+    });
+    expect(selectCardReentryRequired(store.getState())).toBe(true);
+    expect(selectCheckoutStep(store.getState())).toBe('DETAILS');
+
+    store.dispatch(
+      detailsSubmitted({
+        customer: {
+          fullName: 'Ana María Gómez',
+          email: 'ana@example.com',
+          phone: '3001234567',
+          legalIdType: 'CC',
+          legalId: '1020304050',
+        },
+        shipping: {
+          departmentCode: '11',
+          cityCode: '11001',
+          addressLine1: 'Calle 100 # 10-20',
+          addressLine2: '',
+          postalCode: '',
+          notes: '',
+          useCustomerData: true,
+        },
+        installments: 1,
+        card: { brand: 'VISA', lastFour: '4242' },
+      }),
+    );
+
+    expect(selectCardReentryRequired(store.getState())).toBe(false);
   });
 });

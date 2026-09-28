@@ -89,7 +89,14 @@ describe('ProductPage', () => {
   it('lowers a quantity chosen before when the stock no longer allows it', async () => {
     fetchStub.respondJson(lowStock());
     renderProductPage({
-      checkout: { productId: PRODUCT_ID, quantity: 5, step: 'PRODUCT', details: null },
+      checkout: {
+        productId: PRODUCT_ID,
+        quantity: 5,
+        step: 'PRODUCT',
+        details: null,
+        draft: null,
+        cardReentryRequired: false,
+      },
     });
 
     expect(await screen.findByRole('spinbutton', { name: 'Cantidad' })).toHaveAttribute(
@@ -145,7 +152,14 @@ describe('ProductPage', () => {
   it('keeps the checkout form closed on another product', async () => {
     fetchStub.respondJson(aProductDetail());
     renderProductPage({
-      checkout: { productId: 'another-product', quantity: 1, step: 'DETAILS', details: null },
+      checkout: {
+        productId: 'another-product',
+        quantity: 1,
+        step: 'DETAILS',
+        details: null,
+        draft: null,
+        cardReentryRequired: false,
+      },
     });
 
     expect(await screen.findByRole('heading', { level: 1 })).toBeInTheDocument();
