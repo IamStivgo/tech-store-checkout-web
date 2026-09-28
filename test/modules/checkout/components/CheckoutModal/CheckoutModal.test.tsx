@@ -76,9 +76,7 @@ describe('CheckoutModal', () => {
     await user.type(number, '9', { initialSelectionStart: 2, initialSelectionEnd: 2 });
 
     expect(number).toHaveValue('4294 2424 2');
-    await waitFor(() => {
-      expect(number.selectionStart).toBe(3);
-    });
+    expect(number.selectionStart).toBe(3);
   });
 
   it('offers a text keyboard for documents with letters', async () => {

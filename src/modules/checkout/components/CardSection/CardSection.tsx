@@ -1,5 +1,5 @@
-import type { ChangeEvent } from 'react';
-import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import { useLayoutEffect, useRef, type ChangeEvent } from 'react';
+import { Controller, useFormContext, type ControllerRenderProps } from 'react-hook-form';
 
 import { CardBrandIcon } from '../../../../components/atoms/CardBrandIcon';
 import { SelectField } from '../../../../components/molecules/SelectField';
@@ -20,19 +20,54 @@ const MAX_FORMATTED_CARD_LENGTH = 23;
 const EXPIRY_LENGTH = 5;
 const CVC_LENGTH = 3;
 
-// Formatting moves the caret to the end; put it back after the digit the user just typed.
-const keepCaret = (input: HTMLInputElement, caret: number) => {
-  requestAnimationFrame(() => {
-    if (document.activeElement === input) {
-      input.setSelectionRange(caret, caret);
+interface CardNumberFieldProps {
+  readonly field: ControllerRenderProps<CheckoutFormInput, 'card.number'>;
+  readonly error?: string;
+}
+
+function CardNumberField({ field, error }: CardNumberFieldProps) {
+  const input = useRef<HTMLInputElement | null>(null);
+  const pendingCaret = useRef<number | null>(null);
+  const brand = detectBrand(field.value.replace(/\s/g, ''));
+
+  // Writing the formatted value moves the caret to the end. Right after React writes it, put
+  // the caret back after the digit the user typed (a later frame could undo a newer move).
+  useLayoutEffect(() => {
+    const caret = pendingCaret.current;
+    pendingCaret.current = null;
+    if (caret !== null && input.current === document.activeElement) {
+      input.current?.setSelectionRange(caret, caret);
     }
-  });
-};
+  }, [field.value]);
+
+  return (
+    <TextField
+      {...field}
+      ref={(element: HTMLInputElement | null) => {
+        field.ref(element);
+        input.current = element;
+      }}
+      label={text.number}
+      placeholder={text.numberPlaceholder}
+      autoComplete="cc-number"
+      inputMode="numeric"
+      maxLength={MAX_FORMATTED_CARD_LENGTH}
+      error={error}
+      suffix={<CardBrandIcon brand={brand} label={text.brand[brand]} />}
+      onChange={(event: ChangeEvent<HTMLInputElement>) => {
+        const formatted = formatCardNumber(
+          event.target.value,
+          event.target.selectionStart ?? undefined,
+        );
+        pendingCaret.current = formatted.caret;
+        field.onChange(formatted.value);
+      }}
+    />
+  );
+}
 
 export function CardSection() {
   const { control, register, formState } = useFormContext<CheckoutFormInput>();
-  const number = useWatch({ control, name: 'card.number' });
-  const brand = detectBrand(number.replace(/\s/g, ''));
   const errors = formState.errors.card;
 
   return (
@@ -40,26 +75,7 @@ export function CardSection() {
       <Controller
         control={control}
         name="card.number"
-        render={({ field }) => (
-          <TextField
-            {...field}
-            label={text.number}
-            placeholder={text.numberPlaceholder}
-            autoComplete="cc-number"
-            inputMode="numeric"
-            maxLength={MAX_FORMATTED_CARD_LENGTH}
-            error={errors?.number?.message}
-            suffix={<CardBrandIcon brand={brand} label={text.brand[brand]} />}
-            onChange={(event: ChangeEvent<HTMLInputElement>) => {
-              const formatted = formatCardNumber(
-                event.target.value,
-                event.target.selectionStart ?? undefined,
-              );
-              field.onChange(formatted.value);
-              keepCaret(event.target, formatted.caret);
-            }}
-          />
-        )}
+        render={({ field }) => <CardNumberField field={field} error={errors?.number?.message} />}
       />
       <TextField
         {...register('card.holder')}
