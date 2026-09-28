@@ -74,42 +74,35 @@ const persistedSchema = z.object({
   }),
 });
 
-/** Saves the checkout; storage can be full or blocked (private mode), which is not an error. */
-export const saveCheckout = (storage: Storage, checkout: CheckoutState, now: Date): void => {
+/** The checkout as it is saved (the storage encrypts it). */
+export const serializeCheckout = (checkout: CheckoutState, now: Date): string => {
   const { productId, quantity, step, details, draft, cardReentryRequired, paymentTransactionId } =
     checkout;
-  try {
-    storage.setItem(
-      CHECKOUT_STORAGE_KEY,
-      JSON.stringify({
-        version: SCHEMA_VERSION,
-        savedAt: now.getTime(),
-        checkout: {
-          productId,
-          quantity,
-          step,
-          details,
-          draft,
-          cardReentryRequired,
-          paymentTransactionId,
-        },
-      }),
-    );
-  } catch {
-    // Without storage the checkout still works; it is only lost on reload.
-  }
+  return JSON.stringify({
+    version: SCHEMA_VERSION,
+    savedAt: now.getTime(),
+    checkout: {
+      productId,
+      quantity,
+      step,
+      details,
+      draft,
+      cardReentryRequired,
+      paymentTransactionId,
+    },
+  });
 };
 
 /** The saved checkout, or undefined when it is missing, expired, corrupt or of another version. */
-export const loadCheckout = (storage: Storage, now: Date): CheckoutState | undefined => {
-  try {
-    const raw = storage.getItem(CHECKOUT_STORAGE_KEY);
-    const parsed = persistedSchema.safeParse(raw ? JSON.parse(raw) : undefined);
-    if (parsed.success && now.getTime() - parsed.data.savedAt < CHECKOUT_TTL_MS) {
-      return parsed.data.checkout;
-    }
-    storage.removeItem(CHECKOUT_STORAGE_KEY);
+export const parseCheckout = (saved: string | null, now: Date): CheckoutState | undefined => {
+  if (saved === null) {
     return undefined;
+  }
+  try {
+    const parsed = persistedSchema.safeParse(JSON.parse(saved));
+    return parsed.success && now.getTime() - parsed.data.savedAt < CHECKOUT_TTL_MS
+      ? parsed.data.checkout
+      : undefined;
   } catch {
     return undefined;
   }

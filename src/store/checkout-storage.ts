@@ -1,5 +1,10 @@
-import { loadCheckout, saveCheckout } from '../modules/checkout/store/checkout-persistence';
+import {
+  CHECKOUT_STORAGE_KEY,
+  parseCheckout,
+  serializeCheckout,
+} from '../modules/checkout/store/checkout-persistence';
 import { restoreCheckout } from '../modules/checkout/store/checkout.slice';
+import type { AsyncStorage } from '../services/storage/encrypted-storage';
 
 import type { AppStore, RootState } from './store';
 
@@ -7,15 +12,23 @@ import type { AppStore, RootState } from './store';
 const SAVE_INTERVAL_MS = 500;
 
 /** State to start the store with: the checkout saved before a reload, if still valid. */
-export const loadSavedState = (storage: Storage, now: Date): Partial<RootState> | undefined => {
-  const saved = loadCheckout(storage, now);
+export const loadSavedState = async (
+  storage: AsyncStorage,
+  now: Date,
+): Promise<Partial<RootState> | undefined> => {
+  const stored = await storage.getItem(CHECKOUT_STORAGE_KEY);
+  const saved = parseCheckout(stored, now);
+  if (!saved && stored !== null) {
+    // Expired or no longer valid: forget it.
+    await storage.removeItem(CHECKOUT_STORAGE_KEY);
+  }
   return saved ? { checkout: restoreCheckout(saved) } : undefined;
 };
 
 /** Keeps the checkout in storage while the buyer goes through it; returns the stop function. */
 export const saveCheckoutChanges = (
   store: AppStore,
-  storage: Storage,
+  storage: AsyncStorage,
   now: () => Date = () => new Date(),
 ): (() => void) => {
   let saved = store.getState().checkout;
@@ -28,7 +41,7 @@ export const saveCheckoutChanges = (
     pending = setTimeout(() => {
       pending = undefined;
       saved = store.getState().checkout;
-      saveCheckout(storage, saved, now());
+      void storage.setItem(CHECKOUT_STORAGE_KEY, serializeCheckout(saved, now()));
     }, SAVE_INTERVAL_MS);
   });
 

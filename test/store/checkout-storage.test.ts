@@ -1,8 +1,9 @@
 import { checkoutStarted, quantitySelected } from '../../src/modules/checkout';
 import {
   CHECKOUT_STORAGE_KEY,
-  saveCheckout,
+  serializeCheckout,
 } from '../../src/modules/checkout/store/checkout-persistence';
+import type { AsyncStorage } from '../../src/services/storage/encrypted-storage';
 import { loadSavedState, saveCheckoutChanges } from '../../src/store/checkout-storage';
 import { createAppStore } from '../../src/store/store';
 import {
@@ -12,16 +13,36 @@ import {
 } from '../modules/checkout/store/checkout-state.builder';
 
 const NOW = new Date('2026-09-24T20:15:00.000Z');
+
+/** What the encrypted storage would keep, in memory (its encryption is tested on its own). */
+const memoryStorage = () => {
+  const values = new Map<string, string>();
+  const storage: AsyncStorage = {
+    getItem: (name) => Promise.resolve(values.get(name) ?? null),
+    setItem: (name, value) => {
+      values.set(name, value);
+      return Promise.resolve();
+    },
+    removeItem: (name) => {
+      values.delete(name);
+      return Promise.resolve();
+    },
+  };
+  return { storage, values };
+};
+
+let storage: AsyncStorage;
+let values: Map<string, string>;
 const savedCheckout = () =>
   (
-    JSON.parse(localStorage.getItem(CHECKOUT_STORAGE_KEY) ?? 'null') as {
+    JSON.parse(values.get(CHECKOUT_STORAGE_KEY) ?? 'null') as {
       checkout?: { quantity: number; step: string };
     } | null
   )?.checkout;
 
 describe('checkout storage', () => {
   beforeEach(() => {
-    localStorage.clear();
+    ({ storage, values } = memoryStorage());
     jest.useFakeTimers();
   });
 
@@ -29,14 +50,24 @@ describe('checkout storage', () => {
     jest.useRealTimers();
   });
 
-  it('starts a store without saved state when nothing was saved', () => {
-    expect(loadSavedState(localStorage, NOW)).toBeUndefined();
+  it('starts a store without saved state when nothing was saved', async () => {
+    expect(await loadSavedState(storage, NOW)).toBeUndefined();
   });
 
-  it('reopens the form asking for the card again when the summary was reached', () => {
-    saveCheckout(localStorage, aCheckoutState({ step: 'SUMMARY', details: DETAILS }), NOW);
+  it('forgets a saved checkout that is no longer valid', async () => {
+    values.set(CHECKOUT_STORAGE_KEY, serializeCheckout(aCheckoutState(), new Date(0)));
 
-    expect(loadSavedState(localStorage, NOW)?.checkout).toMatchObject({
+    expect(await loadSavedState(storage, NOW)).toBeUndefined();
+    expect(values.has(CHECKOUT_STORAGE_KEY)).toBe(false);
+  });
+
+  it('reopens the form asking for the card again when the summary was reached', async () => {
+    values.set(
+      CHECKOUT_STORAGE_KEY,
+      serializeCheckout(aCheckoutState({ step: 'SUMMARY', details: DETAILS }), NOW),
+    );
+
+    expect((await loadSavedState(storage, NOW))?.checkout).toMatchObject({
       step: 'DETAILS',
       details: DETAILS,
       cardReentryRequired: true,
@@ -44,10 +75,10 @@ describe('checkout storage', () => {
     });
   });
 
-  it('restores the other steps as they were', () => {
-    saveCheckout(localStorage, aCheckoutState({ step: 'DETAILS' }), NOW);
+  it('restores the other steps as they were', async () => {
+    values.set(CHECKOUT_STORAGE_KEY, serializeCheckout(aCheckoutState({ step: 'DETAILS' }), NOW));
 
-    expect(loadSavedState(localStorage, NOW)?.checkout).toMatchObject({
+    expect((await loadSavedState(storage, NOW))?.checkout).toMatchObject({
       step: 'DETAILS',
       cardReentryRequired: false,
       paymentTransactionId: null,
@@ -56,7 +87,7 @@ describe('checkout storage', () => {
 
   it('saves the latest checkout at most every half second', () => {
     const store = createAppStore();
-    const stop = saveCheckoutChanges(store, localStorage, () => NOW);
+    const stop = saveCheckoutChanges(store, storage, () => NOW);
 
     store.dispatch(quantitySelected({ productId: PRODUCT_ID, quantity: 2 }));
     store.dispatch(quantitySelected({ productId: PRODUCT_ID, quantity: 3 }));
@@ -73,7 +104,7 @@ describe('checkout storage', () => {
 
   it('ignores actions that do not change the checkout and stops when asked', () => {
     const store = createAppStore();
-    const stop = saveCheckoutChanges(store, localStorage);
+    const stop = saveCheckoutChanges(store, storage);
 
     store.dispatch({ type: 'unrelated/action' });
     jest.advanceTimersByTime(500);
