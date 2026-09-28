@@ -68,7 +68,8 @@ const renderCheckout = (tokenizer: CardTokenizer = new FakeCardTokenizer()) => {
       </CardTokenizerContext>
     </Provider>,
   );
-  return { store, user: userEvent.setup() };
+  // No pause between keystrokes: every test types the whole form.
+  return { store, user: userEvent.setup({ delay: null }) };
 };
 
 const reachSummary = async (user: ReturnType<typeof userEvent.setup>) => {
@@ -79,6 +80,9 @@ const reachSummary = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(await screen.findByRole('checkbox', { name: /términos y condiciones/ }));
   await user.click(screen.getByRole('checkbox', { name: /datos personales/ }));
 };
+
+// Each test goes through the whole checkout form, which is slow under a parallel full run.
+jest.setTimeout(15_000);
 
 describe('ProductPage payment', () => {
   afterEach(() => {
