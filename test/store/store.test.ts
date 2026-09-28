@@ -14,6 +14,8 @@ describe('createAppStore', () => {
       quantity: 1,
       step: 'PRODUCT',
       details: null,
+      draft: null,
+      cardReentryRequired: false,
     });
   });
 });

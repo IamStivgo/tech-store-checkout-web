@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, type ChangeEvent } from 'react';
 import { Controller, useFormContext, type ControllerRenderProps } from 'react-hook-form';
 
 import { CardBrandIcon } from '../../../../components/atoms/CardBrandIcon';
+import { Banner } from '../../../../components/molecules/Banner';
 import { SelectField } from '../../../../components/molecules/SelectField';
 import { TextField } from '../../../../components/molecules/TextField';
 import { INSTALLMENTS, installmentsLabel } from '../../../../data/installments';
@@ -66,12 +67,18 @@ function CardNumberField({ field, error }: CardNumberFieldProps) {
   );
 }
 
-export function CardSection() {
+export interface CardSectionProps {
+  /** The card was lost with a reload: explain why it is empty. */
+  readonly reentryRequired?: boolean;
+}
+
+export function CardSection({ reentryRequired = false }: CardSectionProps) {
   const { control, register, formState } = useFormContext<CheckoutFormInput>();
   const errors = formState.errors.card;
 
   return (
     <FormSection title={text.section}>
+      {reentryRequired && <Banner variant="info">{text.reenter}</Banner>}
       <Controller
         control={control}
         name="card.number"

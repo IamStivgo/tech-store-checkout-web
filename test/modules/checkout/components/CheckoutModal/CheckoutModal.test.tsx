@@ -2,8 +2,12 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 
-import { CheckoutModal } from '../../../../../src/modules/checkout/components/CheckoutModal/CheckoutModal';
+import {
+  CheckoutModal,
+  type CheckoutModalProps,
+} from '../../../../../src/modules/checkout/components/CheckoutModal/CheckoutModal';
 import type { CheckoutFormValues } from '../../../../../src/modules/checkout/schemas/checkout-form.schema';
+import type { CheckoutDraft } from '../../../../../src/modules/checkout/store/checkout.slice';
 import { createAppStore } from '../../../../../src/store/store';
 import { stubFetch } from '../../../../services/api/fetch-stub';
 import {
@@ -15,12 +19,12 @@ import {
 } from '../../fill-checkout-form';
 
 const NOW = () => new Date(2026, 8, 24);
-const renderModal = () => {
+const renderModal = (props: Partial<CheckoutModalProps> = {}) => {
   const onSubmit = jest.fn<undefined, [CheckoutFormValues]>();
   const onClose = jest.fn();
   render(
     <Provider store={createAppStore()}>
-      <CheckoutModal open onClose={onClose} onSubmit={onSubmit} now={NOW} />
+      <CheckoutModal open onClose={onClose} onSubmit={onSubmit} now={NOW} {...props} />
     </Provider>,
   );
   return { onSubmit, onClose, user: userEvent.setup() };
@@ -208,6 +212,69 @@ describe('CheckoutModal', () => {
         notes: '',
         useCustomerData: true,
       },
+    });
+  });
+
+  describe('after a reload', () => {
+    const draft = {
+      customer: {
+        fullName: 'Ana María Gómez',
+        email: 'ana.gomez@example.com',
+        phone: '3001234567',
+        legalIdType: 'CC' as const,
+        legalId: '1020304050',
+      },
+      shipping: {
+        departmentCode: '',
+        cityCode: '',
+        addressLine1: 'Calle 100 # 10-20',
+        addressLine2: '',
+        postalCode: '',
+        notes: '',
+        useCustomerData: false,
+        recipientName: 'Luis Pérez',
+        recipientPhone: '3100000000',
+      },
+      installments: '6',
+    };
+
+    it('starts with the saved customer, delivery and installments, but never the card', () => {
+      renderModal({ initialValues: draft });
+
+      expect(field('Email')).toHaveValue('ana.gomez@example.com');
+      expect(field('Dirección')).toHaveValue('Calle 100 # 10-20');
+      expect(field('Nombre de quien recibe')).toHaveValue('Luis Pérez');
+      expect(field('Cuotas')).toHaveDisplayValue('6 cuotas');
+      expect(field('Número de tarjeta')).toHaveValue('');
+    });
+
+    it('keeps the delivery to the customer when that was chosen', () => {
+      renderModal({
+        initialValues: { ...draft, shipping: { ...draft.shipping, useCustomerData: true } },
+      });
+
+      expect(field('Usar mis datos para la entrega')).toBeChecked();
+      expect(screen.queryByLabelText('Nombre de quien recibe')).not.toBeInTheDocument();
+    });
+
+    it('explains why the card has to be typed again', () => {
+      renderModal({ cardReentryRequired: true });
+
+      expect(
+        within(screen.getByRole('group', { name: 'Tarjeta' })).getByRole('status'),
+      ).toHaveTextContent('Por seguridad, ingresa de nuevo los datos de tu tarjeta.');
+    });
+
+    it('reports what the buyer types, without the card', async () => {
+      const onDraftChange = jest.fn<undefined, [CheckoutDraft]>();
+      const { user } = renderModal({ onDraftChange });
+
+      await user.type(field('Email'), 'a');
+      await user.type(field('Número de tarjeta'), '4');
+
+      const last = onDraftChange.mock.lastCall?.[0];
+      expect(last).toMatchObject({ customer: { email: 'a' }, installments: '1' });
+      expect(JSON.stringify(last)).not.toContain('"number"');
     });
   });
 });

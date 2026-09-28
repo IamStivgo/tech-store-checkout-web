@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { Divider } from '../../../../components/atoms/Divider';
@@ -14,17 +15,23 @@ import { messages } from '../../../../data/messages.es-CO';
 import type { ApiError } from '../../../../services/api/api-error';
 import type { ProductDetail } from '../../../../services/api/contract';
 import { useGetProductQuery } from '../../../../services/api/products.api';
-import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
+import { useAppDispatch, useAppSelector, useAppStore } from '../../../../store/hooks';
 import { cardDigits, detectBrand } from '../../../../utils/card';
 import {
   CheckoutModal,
   checkoutClosed,
   checkoutStarted,
   detailsSubmitted,
+  draftSaved,
   quantitySelected,
+  selectCardReentryRequired,
+  selectCheckoutDetails,
+  selectCheckoutDraft,
   selectCheckoutProductId,
   selectCheckoutStep,
   selectQuantityFor,
+  type CheckoutDetails,
+  type CheckoutDraft,
   type CheckoutFormValues,
 } from '../../../checkout';
 import { NotFoundPage } from '../../../not-found';
@@ -89,10 +96,33 @@ const toCheckoutDetails = ({ card, customer, shipping }: CheckoutFormValues) => 
   };
 };
 
+// The form sent before a reload is shown again, except the card.
+const draftFromDetails = ({
+  customer,
+  shipping,
+  installments,
+}: CheckoutDetails): CheckoutDraft => ({
+  customer,
+  shipping,
+  installments: String(installments),
+});
+
 function ProductDetails({ product }: { readonly product: ProductDetail }) {
   const dispatch = useAppDispatch();
   const step = useAppSelector(selectCheckoutStep);
   const checkoutProductId = useAppSelector(selectCheckoutProductId);
+  const store = useAppStore();
+  // Read once: afterwards the form keeps its own state, so typing does not re-render the page.
+  const [initialValues] = useState(() => {
+    const state = store.getState();
+    const details = selectCheckoutDetails(state);
+    return selectCheckoutDraft(state) ?? (details ? draftFromDetails(details) : undefined);
+  });
+  const cardReentryRequired = useAppSelector(selectCardReentryRequired);
+  const saveDraft = useCallback(
+    (changed: CheckoutDraft) => dispatch(draftSaved(changed)),
+    [dispatch],
+  );
   const selected = useAppSelector((state) => selectQuantityFor(state, product.id));
   const maxUnits = product.maxUnitsPerOrder;
   const available = maxUnits > 0;
@@ -140,6 +170,9 @@ function ProductDetails({ product }: { readonly product: ProductDetail }) {
         onSubmit={(values) => {
           dispatch(detailsSubmitted(toCheckoutDetails(values)));
         }}
+        initialValues={initialValues}
+        cardReentryRequired={cardReentryRequired}
+        onDraftChange={saveDraft}
       />
     </div>
   );
