@@ -68,7 +68,11 @@ function Details({ transaction }: { readonly transaction: Transaction }) {
         </div>
       )}
       <div className={styles.row}>
-        <dt>{messages.result.total}</dt>
+        <dt>
+          {transaction.status === 'APPROVED'
+            ? messages.result.total
+            : messages.result.totalNotCharged}
+        </dt>
         <dd className={styles.total}>{formatCop(amounts.total.amountInCents)}</dd>
       </div>
       {estimate && (
