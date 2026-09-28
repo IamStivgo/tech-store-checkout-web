@@ -40,6 +40,11 @@ export const messages = {
   },
   checkout: {
     title: 'Pago con tarjeta',
+    tokenization: {
+      NETWORK: 'No pudimos verificar tu tarjeta. Revisa tu conexión e intenta de nuevo.',
+      INVALID_CARD: 'La pasarela no aceptó los datos de la tarjeta. Revísalos e intenta de nuevo.',
+      PROVIDER_UNAVAILABLE: 'La pasarela de pagos no responde. Intenta en unos segundos.',
+    },
     card: {
       section: 'Tarjeta',
       number: 'Número de tarjeta',
@@ -133,6 +138,43 @@ export const messages = {
     processing: 'Procesando…',
     serviceUnavailable: 'El servicio de pagos no responde. Intenta en unos segundos.',
     quoteError: 'No pudimos calcular el total de tu compra.',
+    acceptance: {
+      endUserPolicy: 'Acepto los términos y condiciones y la política de privacidad',
+      personalDataAuth: 'Autorizo el tratamiento de mis datos personales',
+      read: 'Leer documento',
+      newTab: '(se abre en una pestaña nueva)',
+      required: 'Debes aceptarlo para pagar',
+      error: 'No pudimos cargar los documentos que debes aceptar.',
+    },
+    paymentErrors: {
+      stock:
+        'Ya no hay unidades suficientes de este producto. Ajusta la cantidad e intenta de nuevo.',
+      rejected: 'La pasarela rechazó el pago. Revisa los datos e intenta de nuevo.',
+    },
+  },
+  result: {
+    pending: {
+      title: 'Estamos confirmando tu pago',
+      body: 'Esto puede tardar unos segundos. No cierres esta página.',
+    },
+    approved: {
+      title: '¡Pago aprobado!',
+      body: (reference: string) => `Tu pedido ${reference} está confirmado.`,
+    },
+    declined: {
+      title: 'Pago rechazado',
+      body: 'No se realizó ningún cobro. Puedes intentarlo con otra tarjeta.',
+    },
+    closed: {
+      title: 'La compra no se completó',
+      body: 'La reserva del producto expiró o fue cancelada. No se realizó ningún cobro.',
+    },
+    product: (name: string, quantity: number) => `${name} × ${quantity}`,
+    total: 'Total pagado',
+    reference: 'Referencia',
+    card: (brand: string, lastFour: string) => `${brand} •••• ${lastFour}`,
+    tryAgain: 'Intentar de nuevo',
+    error: 'No pudimos consultar el estado de tu pago.',
   },
   notFound: {
     page: {

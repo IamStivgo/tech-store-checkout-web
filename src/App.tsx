@@ -7,7 +7,11 @@ import { ROUTES } from './config/routes';
 import { messages } from './data/messages.es-CO';
 import { CatalogPage } from './modules/catalog';
 import { NotFoundPage } from './modules/not-found';
+import { PaymentResultPage } from './modules/payment-result';
 import { ProductPage } from './modules/product';
+import type { CardTokenizer } from './services/tokenization/card-tokenizer';
+import { CardTokenizerContext } from './services/tokenization/card-tokenizer-context';
+import { FakeCardTokenizer } from './services/tokenization/fake-card-tokenizer';
 import type { AppStore } from './store/store';
 
 export type AppRouter = ReturnType<typeof createBrowserRouter>;
@@ -31,6 +35,7 @@ export const appRoutes: RouteObject[] = [
     children: [
       { index: true, element: <CatalogPage /> },
       { path: ROUTES.product, element: <ProductPage /> },
+      { path: ROUTES.paymentResult, element: <PaymentResultPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
@@ -39,12 +44,18 @@ export const appRoutes: RouteObject[] = [
 export interface AppProps {
   readonly store: AppStore;
   readonly router: AppRouter;
+  /** Turns the card into a provider token in the browser. */
+  readonly tokenizer?: CardTokenizer;
 }
 
-export function App({ store, router }: AppProps) {
+const defaultTokenizer = new FakeCardTokenizer();
+
+export function App({ store, router, tokenizer = defaultTokenizer }: AppProps) {
   return (
     <Provider store={store}>
-      <RouterProvider router={router} />
+      <CardTokenizerContext value={tokenizer}>
+        <RouterProvider router={router} />
+      </CardTokenizerContext>
     </Provider>
   );
 }
