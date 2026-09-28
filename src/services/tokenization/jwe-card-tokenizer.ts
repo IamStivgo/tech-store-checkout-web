@@ -10,6 +10,11 @@ import type {
 export interface JweTokenizerConfig {
   readonly apiUrl: string;
   readonly publicKey: string;
+  /**
+   * Where to download the provider's encryption key: the store API, because the provider does
+   * not allow reading it from the browser (CORS).
+   */
+  readonly keyUrl: string;
 }
 
 type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
@@ -18,7 +23,7 @@ const KEY_ALGORITHM = 'RSA-OAEP-256';
 const CONTENT_ENCRYPTION = 'A256GCM';
 const HTTP_SERVER_ERROR = 500;
 
-const keyResponseSchema = z.object({ data: z.object({ publicKey: z.string().min(1) }) });
+const keyResponseSchema = z.object({ publicKey: z.string().min(1) });
 const tokenResponseSchema = z.object({
   data: z.object({ id: z.string().min(1), brand: z.string(), last_four: z.string() }),
 });
@@ -87,13 +92,16 @@ export class JweCardTokenizer implements CardTokenizer {
   }
 
   private async downloadKey(): Promise<CryptoKey> {
-    const response = await this.call('/tokens/keys/tokenization', { method: 'GET' });
+    const response = await this.fetchFn(this.config.keyUrl, { method: 'GET' });
+    if (!response.ok) {
+      throw failureFor(response.status);
+    }
     const parsed = keyResponseSchema.safeParse(await response.json());
     if (!parsed.success) {
       throw new TokenizationFailure('PROVIDER_UNAVAILABLE');
     }
     const { importSPKI } = await import('jose');
-    return importSPKI(parsed.data.data.publicKey, KEY_ALGORITHM);
+    return importSPKI(parsed.data.publicKey, KEY_ALGORITHM);
   }
 
   private async call(

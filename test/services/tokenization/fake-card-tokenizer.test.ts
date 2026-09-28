@@ -38,4 +38,24 @@ describe('createCardTokenizer', () => {
       createCardTokenizer({ mode: 'jwe', apiUrl: 'https://provider.test/v1', publicKey: 'pub' }),
     ).toBeInstanceOf(JweCardTokenizer);
   });
+
+  it('downloads the encryption key from the store API, on the page origin', async () => {
+    const fetchSpy = jest.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('offline'));
+    const tokenizer = createCardTokenizer({
+      mode: 'jwe',
+      apiUrl: 'https://provider.test/v1',
+      publicKey: 'pub',
+    });
+
+    await tokenizer.tokenize({
+      number: '4242424242424242',
+      cvc: '123',
+      expMonth: '12',
+      expYear: '29',
+      holder: 'ANA MARIA GOMEZ',
+    });
+
+    expect(fetchSpy.mock.calls[0]?.[0]).toBe('http://localhost/api/v1/payments/tokenization-key');
+    fetchSpy.mockRestore();
+  });
 });
