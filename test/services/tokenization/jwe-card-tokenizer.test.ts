@@ -8,6 +8,8 @@ import type { CardInput } from '../../../src/services/tokenization/card-tokenize
 import { JweCardTokenizer } from '../../../src/services/tokenization/jwe-card-tokenizer';
 
 const API_URL = 'https://provider.test/v1';
+const KEY_URL = 'https://store.test/api/v1/payments/tokenization-key';
+const CONFIG = { apiUrl: API_URL, publicKey: 'pub_test_key', keyUrl: KEY_URL };
 const CARD: CardInput = {
   number: '4242424242424242',
   cvc: '123',
@@ -29,14 +31,14 @@ describe('JweCardTokenizer', () => {
     const pair = await generateKeyPair('RSA-OAEP-256');
     privateKey = pair.privateKey;
     // The provider sends the PEM on a single line, with spaces instead of line breaks.
-    keyResponse = { data: { publicKey: (await exportSPKI(pair.publicKey)).replace(/\n/g, ' ') } };
+    keyResponse = { publicKey: (await exportSPKI(pair.publicKey)).replace(/\n/g, ' ') };
   });
 
   const setup = () => {
     const fetchMock = jest.fn<Promise<Response>, [string, RequestInit?]>();
     return {
       fetchMock,
-      tokenizer: new JweCardTokenizer({ apiUrl: API_URL, publicKey: 'pub_test_key' }, fetchMock),
+      tokenizer: new JweCardTokenizer(CONFIG, fetchMock),
     };
   };
 
@@ -52,8 +54,9 @@ describe('JweCardTokenizer', () => {
     });
     const [keyUrl, keyInit] = fetchMock.mock.calls[0] ?? [];
     const [tokenUrl, tokenInit] = fetchMock.mock.calls[1] ?? [];
-    expect(keyUrl).toBe(`${API_URL}/tokens/keys/tokenization`);
-    expect(keyInit?.headers).toEqual({ Authorization: 'Bearer pub_test_key' });
+    // The key comes from the store API, without the provider's credentials.
+    expect(keyUrl).toBe(KEY_URL);
+    expect(keyInit?.headers).toBeUndefined();
     expect(tokenUrl).toBe(`${API_URL}/tokens/cards`);
     expect(tokenInit?.method).toBe('POST');
 
@@ -81,7 +84,7 @@ describe('JweCardTokenizer', () => {
     await tokenizer.tokenize(CARD);
 
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
-      `${API_URL}/tokens/keys/tokenization`,
+      KEY_URL,
       `${API_URL}/tokens/cards`,
       `${API_URL}/tokens/cards`,
     ]);
@@ -113,7 +116,7 @@ describe('JweCardTokenizer', () => {
     const { fetchMock, tokenizer } = setup();
     fetchMock
       .mockResolvedValueOnce(json({}, 500))
-      .mockResolvedValueOnce(json({ data: {} }))
+      .mockResolvedValueOnce(json({}))
       .mockResolvedValueOnce(json(keyResponse))
       .mockResolvedValueOnce(json(TOKEN, 201));
 
@@ -128,7 +131,7 @@ describe('JweCardTokenizer', () => {
       .mockResolvedValueOnce(json(keyResponse))
       .mockResolvedValueOnce(json(TOKEN, 201));
 
-    const result = await new JweCardTokenizer({ apiUrl: API_URL, publicKey: 'pub' }).tokenize(CARD);
+    const result = await new JweCardTokenizer(CONFIG).tokenize(CARD);
 
     expect(result.ok).toBe(true);
     expect(fetchSpy).toHaveBeenCalledTimes(2);
