@@ -14,6 +14,8 @@ export interface ProductCardProps {
   readonly stockStatus: StockStatus;
   /** Text from the copy deck, e.g. "30 disponibles", "Últimas 3" or "Agotado". */
   readonly stockLabel: string;
+  /** First cards of the grid: their image is the largest element of the page (LCP). */
+  readonly priority?: boolean;
 }
 
 // Rendered width of the card image for each grid layout (1/2/3/4 columns, 1200 px container).
@@ -28,12 +30,18 @@ export function ProductCard({
   image,
   stockStatus,
   stockLabel,
+  priority = false,
 }: ProductCardProps) {
   const soldOut = stockStatus === 'OUT_OF_STOCK';
 
   return (
     <Link to={href} className={`${styles.card} ${soldOut ? styles.soldOut : ''}`}>
-      <ResponsiveImage image={image} sizes={IMAGE_SIZES} className={styles.media} />
+      <ResponsiveImage
+        image={image}
+        sizes={IMAGE_SIZES}
+        priority={priority}
+        className={styles.media}
+      />
       <div className={styles.body}>
         <h2 className={styles.name}>{name}</h2>
         <Price amountInCents={priceInCents} size="lg" />

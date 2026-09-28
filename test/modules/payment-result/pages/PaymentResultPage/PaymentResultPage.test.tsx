@@ -54,6 +54,7 @@ describe('PaymentResultPage', () => {
     expect(page).toHaveTextContent(/^.*Llega el/);
     expect(screen.getByRole('link', { name: 'Ir a la tienda' })).toHaveAttribute('href', '/');
     expect(screen.queryByRole('link', { name: 'Intentar de nuevo' })).not.toBeInTheDocument();
+    expect(screen.getByText('Volverás al producto en 15 s')).toBeInTheDocument();
   });
 
   it('explains a declined payment and offers to try again', async () => {

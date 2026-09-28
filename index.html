@@ -7,12 +7,19 @@
       name="description"
       content="Compra accesorios tecnológicos y paga con tarjeta de crédito."
     />
-    <meta name="theme-color" content="#1d4ed8" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#1d4ed8" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f172a" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Tech Store</title>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Painted before the JavaScript runs; React replaces it with the same header. -->
+    <div id="root">
+      <div class="appShellHeader">
+        <div class="appShellInner"><span class="appShellBrand">Tech Store</span></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

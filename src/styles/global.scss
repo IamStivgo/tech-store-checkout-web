@@ -1,7 +1,18 @@
 @use 'abstracts/tokens';
 @use 'base/reset';
 @use 'base/typography';
+@use 'base/app-shell';
 
 :root {
   @include tokens.custom-properties;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    @include tokens.dark-color-properties;
+
+    color-scheme: dark;
+  }
 }

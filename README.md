@@ -29,6 +29,7 @@ Ante una recarga se conserva lo escrito en el formulario (nunca la tarjeta) y, s
 ## Seguridad en el cliente
 
 - El número y el CVC solo existen en el formulario: se cifran (JWE, RSA-OAEP-256 + A256GCM) y se tokenizan directo con la pasarela; al estado de Redux, al almacenamiento y al API solo llegan la marca, los últimos 4 dígitos y el token (este último solo en memoria).
+- El borrador del formulario (datos del cliente y de la entrega) se guarda **cifrado** con AES-GCM y una llave no exportable que vive en IndexedDB; si el navegador no puede cifrar, no se guarda. Se borra a los 30 minutos.
 - La llave de cifrado se descarga del API del mismo origen, porque la pasarela no permite leerla desde el navegador (CORS).
 - Los montos que se muestran son informativos: el API calcula y firma el total.
 - CloudFront envía CSP estricta (`connect-src` limitado al propio origen y a la pasarela), HSTS y demás headers de seguridad (repositorio de infraestructura).
@@ -36,6 +37,9 @@ Ante una recarga se conserva lo escrito en el formulario (nunca la tarjeta) y, s
 ## Diseño y accesibilidad
 
 - Design system propio con tokens en SCSS (colores, tipografía fluida, espacios y radios) y sin librerías de componentes.
+- Tema oscuro automático según la preferencia del dispositivo (`prefers-color-scheme`), con la misma paleta de tokens.
+- Accesibilidad verificada con axe (WCAG 2.2 AA, contraste incluido) en todas las pantallas de la compra, en tema claro y oscuro, dentro de las pruebas E2E.
+- Página de política de privacidad (`/privacidad`) enlazada desde el pie de página.
 - Mobile-first desde 320 px, sin scroll horizontal; foco visible, navegación por teclado, modales con foco atrapado y `prefers-reduced-motion`.
 - Imágenes de producto propias (ilustraciones en `design/product-illustrations/`) en AVIF, WebP y JPEG a 320, 640 y 960 px (`npm run images:build`).
 
@@ -122,6 +126,19 @@ Por defecto la tarjeta se tokeniza con un tokenizador falso que solo funciona co
 | `npm run test:e2e`       | Pruebas E2E con Playwright (en Ubuntu 20.04, dentro de la imagen oficial de Docker)    |
 | `npm run images:build`   | Genera las imágenes de producto desde las ilustraciones SVG                            |
 
+### Ejecución local con Docker
+
+La tienda completa (web, API y DynamoDB Local) sin Node.js ni cuenta de AWS. Necesita el repositorio del API clonado al lado de este (`../tech-store-checkout-api`), porque este `docker-compose.yml` incluye el suyo:
+
+```bash
+docker compose up --build    # http://localhost:8080 (WEB_PORT=8088 para usar otro puerto)
+docker compose down -v       # detiene todo y borra los datos
+```
+
+- `web`: build de Vite servido por nginx sin privilegios (`Dockerfile` multi-stage), con las rutas de la SPA, `/api` redirigido al contenedor del API (mismo origen que en producción) y los headers de seguridad.
+- `api`, `api-init` y `dynamodb`: el stack del repositorio del API, con las tablas y el catálogo creados automáticamente.
+- Pagos con la pasarela falsa, sin llamar a la real: `4242 4242 4242 4242` → aprobado, `4111 1111 1111 1111` → rechazado.
+
 ## Contrato con el API
 
 El API publica su contrato OpenAPI en cada release ([tech-store-checkout-api](https://github.com/IamStivgo/tech-store-checkout-api/releases)). `contract.json` fija la versión que usa este frontend; `npm run contract:sync` descarga ese `openapi.json` y genera los tipos en `src/services/api/generated/api-contract.ts`, y el CI falla (`contract:check`) si no coinciden.
@@ -141,7 +158,6 @@ El API publica su contrato OpenAPI en cada release ([tech-store-checkout-api](ht
 
 - **Atomic Design híbrido:** la UI pura por niveles atómicos (probada solo con props) y la lógica en módulos de negocio; las capas se verifican con ESLint.
 - **Resultado en su propia ruta** (`/transactions/:id`): se puede recargar o compartir y sigue consultando el estado mientras el pago está pendiente.
-- **Pendiente:** cuenta regresiva para volver a la tienda desde el resultado, recuperar un pago en curso si se recarga justo mientras se procesa, y tema oscuro.
 
 ## Autor
 

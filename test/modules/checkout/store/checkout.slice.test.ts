@@ -8,6 +8,9 @@ import {
   detailsEdited,
   detailsSubmitted,
   paymentCompleted,
+  paymentFailed,
+  paymentStarted,
+  selectPaymentTransactionId,
   quantitySelected,
   selectCheckoutDetails,
   selectCheckoutProductId,
@@ -83,6 +86,18 @@ describe('checkout slice', () => {
 
     expect(selectCheckoutStep(store.getState())).toBe('SUMMARY');
     expect(selectCheckoutDetails(store.getState())).toEqual(details);
+  });
+
+  it('remembers the transaction being paid until the payment fails or ends', () => {
+    const store = createAppStore();
+
+    store.dispatch(paymentStarted('tx-1'));
+    expect(selectPaymentTransactionId(store.getState())).toBe('tx-1');
+    store.dispatch(paymentFailed());
+    expect(selectPaymentTransactionId(store.getState())).toBeNull();
+    store.dispatch(paymentStarted('tx-2'));
+    store.dispatch(paymentCompleted());
+    expect(selectPaymentTransactionId(store.getState())).toBeNull();
   });
 
   it('goes back from the summary to edit the details and starts over once paid', () => {

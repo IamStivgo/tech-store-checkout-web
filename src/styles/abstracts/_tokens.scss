@@ -30,6 +30,38 @@ $colors: (
   'disabled-text': #475569,
 );
 
+// Dark theme (T-073): same names, applied with prefers-color-scheme: dark. Pairs of text
+// and background keep at least WCAG AA contrast (checked with axe on every page).
+$colors-dark: (
+  'primary': #60a5fa,
+  'primary-hover': #93c5fd,
+  'primary-strong': #bfdbfe,
+  'primary-subtle': #172554,
+  'primary-contrast': #0f172a,
+  'accent': #22d3ee,
+  'bg': #0f172a,
+  'surface': #1e293b,
+  'surface-muted': #273449,
+  'border': #334155,
+  'border-strong': #94a3b8,
+  'text': #f8fafc,
+  'text-muted': #cbd5e1,
+  'success': #4ade80,
+  'success-strong': #86efac,
+  'success-subtle': #14532d,
+  'warning': #fbbf24,
+  'warning-strong': #fcd34d,
+  'warning-subtle': #451a03,
+  'danger': #f87171,
+  'danger-subtle': #450a0a,
+  'overlay': rgb(2 6 23 / 72%),
+  'focus': #93c5fd,
+  'focus-inverse': #0f172a,
+  'disabled-bg': #1e293b,
+  'disabled-border': #334155,
+  'disabled-text': #94a3b8,
+);
+
 $font-families: (
   'base': (
     system-ui,
@@ -138,6 +170,12 @@ $groups: (
   'easing': $easings,
   'layout': $layout,
 );
+
+@mixin dark-color-properties {
+  @each $name, $value in $colors-dark {
+    --color-#{$name}: #{meta.inspect($value)};
+  }
+}
 
 @mixin custom-properties {
   @each $group, $tokens in $groups {

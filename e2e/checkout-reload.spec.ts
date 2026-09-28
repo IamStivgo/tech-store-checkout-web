@@ -20,7 +20,9 @@ const serveApi = async (page: Page) => {
   });
 };
 
-test('restores the checkout form after a reload, without the card', async ({ page }) => {
+test('restores the checkout form after a reload, encrypted and without the card', async ({
+  page,
+}) => {
   await serveApi(page);
   await page.goto(`/products/${CABLE_ID}`);
   await page.getByRole('button', { name: 'Pagar con tarjeta de crédito' }).click();
@@ -37,5 +39,8 @@ test('restores the checkout form after a reload, without the card', async ({ pag
   await expect(dialog.getByLabel('Email')).toHaveValue('ana.gomez@example.com');
   await expect(dialog.getByLabel('Nombre completo')).toHaveValue('Ana María Gómez');
   await expect(dialog.getByLabel('Número de tarjeta')).toHaveValue('');
-  expect(await page.evaluate(() => localStorage.getItem('checkout:v1'))).not.toContain('4242');
+  // Saved encrypted (AES-GCM, key kept in IndexedDB): neither the card nor the buyer's data.
+  const saved = (await page.evaluate(() => localStorage.getItem('checkout:v1'))) ?? '';
+  expect(saved).toMatch(/^enc:v1:/);
+  expect(saved).not.toMatch(/4242|ana\.gomez|Ana María/);
 });
