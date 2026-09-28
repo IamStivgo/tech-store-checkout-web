@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { AppFooter } from '../../organisms/AppFooter';
+import { AppFooter, type FooterLink } from '../../organisms/AppFooter';
 import { AppHeader } from '../../organisms/AppHeader';
 
 import styles from './MainLayout.module.scss';
@@ -12,6 +12,8 @@ export interface MainLayoutProps {
   readonly skipToContentLabel: string;
   readonly footerCopyright: string;
   readonly footerNotice: string;
+  readonly footerLinks?: readonly FooterLink[];
+  readonly footerLinksLabel?: string;
   readonly children: ReactNode;
 }
 
@@ -20,6 +22,8 @@ export function MainLayout({
   skipToContentLabel,
   footerCopyright,
   footerNotice,
+  footerLinks,
+  footerLinksLabel,
   children,
 }: MainLayoutProps) {
   return (
@@ -31,7 +35,12 @@ export function MainLayout({
       <main id={MAIN_CONTENT_ID} className={styles.main} tabIndex={-1}>
         {children}
       </main>
-      <AppFooter copyright={footerCopyright} notice={footerNotice} />
+      <AppFooter
+        copyright={footerCopyright}
+        notice={footerNotice}
+        links={footerLinks}
+        linksLabel={footerLinksLabel}
+      />
     </div>
   );
 }
