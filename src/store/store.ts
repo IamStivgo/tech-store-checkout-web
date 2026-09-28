@@ -1,6 +1,7 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 
-import { checkoutSlice } from '../modules/checkout';
+// The slice directly, not the module index: the checkout form loads with its own route.
+import { checkoutSlice } from '../modules/checkout/store/checkout.slice';
 import { baseApi } from '../services/api/base-api';
 
 const rootReducer = combineReducers({

@@ -1,0 +1,27 @@
+@use '../abstracts' as *;
+
+// Static header painted by index.html before the JavaScript runs (first contentful paint).
+// Same box as AppHeader, so nothing moves when React replaces it.
+.appShellHeader {
+  height: 56px;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+
+  @include mq('lg') {
+    height: 64px;
+  }
+}
+
+.appShellInner {
+  @include page-container;
+
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.appShellBrand {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}

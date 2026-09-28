@@ -22,6 +22,9 @@ const stockLabel = ({ status, available }: ProductSummary['stock']): string => {
     : messages.stock.inStock(available);
 };
 
+// Cards visible without scrolling on phones and tablets: their images load first.
+const ABOVE_THE_FOLD_CARDS = 2;
+
 function CatalogContent() {
   const { data, isLoading, isError, refetch } = useListProductsQuery();
 
@@ -65,7 +68,7 @@ function CatalogContent() {
 
   return (
     <ProductGrid label={messages.catalog.title}>
-      {data.data.map((product) => (
+      {data.data.map((product, index) => (
         <li key={product.id}>
           <ProductCard
             href={generatePath(ROUTES.product, { productId: product.id })}
@@ -74,6 +77,7 @@ function CatalogContent() {
             image={product.image}
             stockStatus={product.stock.status}
             stockLabel={stockLabel(product.stock)}
+            priority={index < ABOVE_THE_FOLD_CARDS}
           />
         </li>
       ))}
