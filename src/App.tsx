@@ -21,6 +21,8 @@ function RootLayout() {
       skipToContentLabel={messages.app.skipToContent}
       footerCopyright={messages.app.footer.copyright}
       footerNotice={messages.app.footer.payments}
+      footerLinks={[{ to: ROUTES.privacy, label: messages.app.footer.privacy }]}
+      footerLinksLabel={messages.app.footer.linksLabel}
     >
       <Outlet />
     </MainLayout>
@@ -44,6 +46,11 @@ export const appRoutes: RouteObject[] = [
           import('./modules/payment-result').then(({ PaymentResultPage }) => ({
             Component: PaymentResultPage,
           })),
+      },
+      {
+        path: ROUTES.privacy,
+        lazy: () =>
+          import('./modules/privacy').then(({ PrivacyPage }) => ({ Component: PrivacyPage })),
       },
       { path: '*', element: <NotFoundPage /> },
     ],

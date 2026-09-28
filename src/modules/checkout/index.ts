@@ -4,7 +4,11 @@ export { useCheckoutPayment } from './hooks/use-checkout-payment';
 export type { CheckoutPaymentResult } from './hooks/use-checkout-payment';
 export type { CheckoutModalProps } from './components/CheckoutModal';
 export type { CheckoutFormValues } from './schemas/checkout-form.schema';
-export { CHECKOUT_STORAGE_KEY, loadCheckout, saveCheckout } from './store/checkout-persistence';
+export {
+  CHECKOUT_STORAGE_KEY,
+  parseCheckout,
+  serializeCheckout,
+} from './store/checkout-persistence';
 export {
   checkoutClosed,
   checkoutSlice,

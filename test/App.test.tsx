@@ -26,6 +26,17 @@ describe('App', () => {
     fetchStub.restore();
   });
 
+  it('shows the privacy policy, linked from the footer', async () => {
+    renderAppAt('/privacidad');
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Política de privacidad' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Tus derechos' })).toBeInTheDocument();
+    const legal = screen.getByRole('navigation', { name: 'Información legal' });
+    expect(legal.querySelector('a')).toHaveAttribute('href', '/privacidad');
+  });
+
   it('shows the catalog inside the main layout at the home route', async () => {
     fetchStub.respondJson({ data: [aProductSummary()], meta: { count: 1 } });
     renderAppAt('/');

@@ -29,6 +29,7 @@ Ante una recarga se conserva lo escrito en el formulario (nunca la tarjeta) y, s
 ## Seguridad en el cliente
 
 - El número y el CVC solo existen en el formulario: se cifran (JWE, RSA-OAEP-256 + A256GCM) y se tokenizan directo con la pasarela; al estado de Redux, al almacenamiento y al API solo llegan la marca, los últimos 4 dígitos y el token (este último solo en memoria).
+- El borrador del formulario (datos del cliente y de la entrega) se guarda **cifrado** con AES-GCM y una llave no exportable que vive en IndexedDB; si el navegador no puede cifrar, no se guarda. Se borra a los 30 minutos.
 - La llave de cifrado se descarga del API del mismo origen, porque la pasarela no permite leerla desde el navegador (CORS).
 - Los montos que se muestran son informativos: el API calcula y firma el total.
 - CloudFront envía CSP estricta (`connect-src` limitado al propio origen y a la pasarela), HSTS y demás headers de seguridad (repositorio de infraestructura).
@@ -36,6 +37,9 @@ Ante una recarga se conserva lo escrito en el formulario (nunca la tarjeta) y, s
 ## Diseño y accesibilidad
 
 - Design system propio con tokens en SCSS (colores, tipografía fluida, espacios y radios) y sin librerías de componentes.
+- Tema oscuro automático según la preferencia del dispositivo (`prefers-color-scheme`), con la misma paleta de tokens.
+- Accesibilidad verificada con axe (WCAG 2.2 AA, contraste incluido) en todas las pantallas de la compra, en tema claro y oscuro, dentro de las pruebas E2E.
+- Página de política de privacidad (`/privacidad`) enlazada desde el pie de página.
 - Mobile-first desde 320 px, sin scroll horizontal; foco visible, navegación por teclado, modales con foco atrapado y `prefers-reduced-motion`.
 - Imágenes de producto propias (ilustraciones en `design/product-illustrations/`) en AVIF, WebP y JPEG a 320, 640 y 960 px (`npm run images:build`).
 
@@ -154,7 +158,6 @@ El API publica su contrato OpenAPI en cada release ([tech-store-checkout-api](ht
 
 - **Atomic Design híbrido:** la UI pura por niveles atómicos (probada solo con props) y la lógica en módulos de negocio; las capas se verifican con ESLint.
 - **Resultado en su propia ruta** (`/transactions/:id`): se puede recargar o compartir y sigue consultando el estado mientras el pago está pendiente.
-- **Pendiente:** cuenta regresiva para volver a la tienda desde el resultado, recuperar un pago en curso si se recarga justo mientras se procesa, y tema oscuro.
 
 ## Autor
 

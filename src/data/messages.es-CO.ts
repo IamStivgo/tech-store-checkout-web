@@ -5,6 +5,8 @@ export const messages = {
     footer: {
       copyright: '© 2026 Tech Store',
       payments: 'Pagos con tarjeta procesados por una pasarela de pagos en modo de pruebas.',
+      linksLabel: 'Información legal',
+      privacy: 'Política de privacidad',
     },
   },
   catalog: {
