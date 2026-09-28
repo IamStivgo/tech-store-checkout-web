@@ -20,6 +20,7 @@
     "typecheck": "tsc -b",
     "contract:sync": "node scripts/contract.js sync",
     "contract:check": "node scripts/contract.js check",
+    "images:build": "node scripts/build-product-images.js",
     "test": "NODE_OPTIONS='--experimental-vm-modules --disable-warning=ExperimentalWarning' jest --coverage",
     "test:e2e": "playwright test",
     "prepare": "husky"
