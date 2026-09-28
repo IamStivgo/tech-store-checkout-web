@@ -51,6 +51,7 @@ export const messages = {
       cvc: 'CVC',
       cvcPlaceholder: '123',
       cvcHint: '3 dígitos al reverso',
+      reenter: 'Por seguridad, ingresa de nuevo los datos de tu tarjeta.',
       installments: 'Cuotas',
       brand: {
         VISA: 'Visa',

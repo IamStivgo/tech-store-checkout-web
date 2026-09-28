@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useId, useMemo, useRef } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { useEffect, useId, useMemo, useRef } from 'react';
+import { FormProvider, useForm, type DeepPartial } from 'react-hook-form';
 
 import { Button } from '../../../../components/atoms/Button';
 import { Banner } from '../../../../components/molecules/Banner';
@@ -13,6 +13,7 @@ import {
   type CheckoutFormInput,
   type CheckoutFormValues,
 } from '../../schemas/checkout-form.schema';
+import type { CheckoutDraft } from '../../store/checkout.slice';
 import { CardSection } from '../CardSection';
 import { CustomerSection } from '../CustomerSection';
 import { ShippingSection } from '../ShippingSection';
@@ -40,6 +41,36 @@ const EMPTY_FORM: CheckoutFormInput = {
   },
 };
 
+// The restored draft never includes the card: it always starts empty.
+const initialForm = (draft?: CheckoutDraft): CheckoutFormInput => {
+  if (!draft) {
+    return EMPTY_FORM;
+  }
+  const { useCustomerData, recipientName = '', recipientPhone = '', ...shipping } = draft.shipping;
+  return {
+    card: { ...EMPTY_FORM.card, installments: draft.installments },
+    customer: draft.customer,
+    shipping: useCustomerData
+      ? { ...shipping, useCustomerData: true }
+      : { ...shipping, useCustomerData: false, recipientName, recipientPhone },
+  };
+};
+
+const toDraft = ({ customer, shipping, card }: DeepPartial<CheckoutFormInput>): CheckoutDraft => {
+  const recipient = shipping as { recipientName?: string; recipientPhone?: string } | undefined;
+  return {
+    customer: { ...EMPTY_FORM.customer, ...customer },
+    shipping: {
+      ...EMPTY_FORM.shipping,
+      ...shipping,
+      useCustomerData: shipping?.useCustomerData ?? true,
+      recipientName: recipient?.recipientName,
+      recipientPhone: recipient?.recipientPhone,
+    },
+    installments: String(card?.installments ?? EMPTY_FORM.card.installments),
+  };
+};
+
 export interface CheckoutModalProps {
   readonly open: boolean;
   readonly onClose: () => void;
@@ -47,6 +78,12 @@ export interface CheckoutModalProps {
   readonly onSubmit: (values: CheckoutFormValues) => void | Promise<void>;
   /** Clock used to reject expired cards (injectable for tests). */
   readonly now?: () => Date;
+  /** Customer, delivery and installments to start with, e.g. after a reload. */
+  readonly initialValues?: CheckoutDraft;
+  /** The card data was lost: show why the card fields are empty. */
+  readonly cardReentryRequired?: boolean;
+  /** Receives what the buyer types (never the card) to keep it across reloads. */
+  readonly onDraftChange?: (draft: CheckoutDraft) => void;
 }
 
 /** Step 2 of the checkout: card, customer and delivery data in one validated form. */
@@ -55,17 +92,32 @@ export function CheckoutModal({
   onClose,
   onSubmit,
   now = () => new Date(),
+  initialValues,
+  cardReentryRequired = false,
+  onDraftChange,
 }: CheckoutModalProps) {
   const formId = useId();
   const schema = useMemo(() => createCheckoutFormSchema(now), [now]);
   const form = useForm<CheckoutFormInput, unknown, CheckoutFormValues>({
     resolver: zodResolver(schema),
     mode: 'onTouched',
-    defaultValues: EMPTY_FORM,
+    defaultValues: initialForm(initialValues),
     // React Hook Form focuses in registration order, which differs from the visual order.
     shouldFocusError: false,
   });
   const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (!onDraftChange) {
+      return undefined;
+    }
+    return form.subscribe({
+      formState: { values: true },
+      callback: ({ values }) => {
+        onDraftChange(toDraft(values));
+      },
+    });
+  }, [form, onDraftChange]);
 
   const focusFirstInvalidField = () => {
     // Runs after React renders the errors, when the fields carry aria-invalid.
@@ -107,7 +159,7 @@ export function CheckoutModal({
             <Banner variant="danger">{messages.checkout.errorSummary(errorCount)}</Banner>
           )}
           <fieldset className={styles.sections} disabled={isSubmitting}>
-            <CardSection />
+            <CardSection reentryRequired={cardReentryRequired} />
             <CustomerSection />
             <ShippingSection />
           </fieldset>

@@ -149,6 +149,86 @@ describe('ProductPage', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('reopens the form with the saved draft and keeps typing in the store', async () => {
+    fetchStub.respondJson(aProductDetail());
+    fetchStub.respondJson(DEPARTMENTS);
+    const store = renderProductPage({
+      checkout: {
+        productId: PRODUCT_ID,
+        quantity: 1,
+        step: 'DETAILS',
+        details: null,
+        draft: {
+          customer: {
+            fullName: 'Ana María Gómez',
+            email: 'ana@',
+            phone: '',
+            legalIdType: 'CC',
+            legalId: '',
+          },
+          shipping: {
+            departmentCode: '',
+            cityCode: '',
+            addressLine1: '',
+            addressLine2: '',
+            postalCode: '',
+            notes: '',
+            useCustomerData: true,
+          },
+          installments: '1',
+        },
+        cardReentryRequired: false,
+      },
+    });
+    const user = userEvent.setup();
+
+    const email = await screen.findByLabelText('Email');
+    expect(email).toHaveValue('ana@');
+    await user.type(email, 'example.com');
+
+    expect(store.getState().checkout.draft?.customer.email).toBe('ana@example.com');
+  });
+
+  it('asks for the card again when the summary had been reached', async () => {
+    fetchStub.respondJson(aProductDetail());
+    fetchStub.respondJson(DEPARTMENTS);
+    renderProductPage({
+      checkout: {
+        productId: PRODUCT_ID,
+        quantity: 1,
+        step: 'DETAILS',
+        details: {
+          customer: {
+            fullName: 'Ana María Gómez',
+            email: 'ana.gomez@example.com',
+            phone: '3001234567',
+            legalIdType: 'CC',
+            legalId: '1020304050',
+          },
+          shipping: {
+            departmentCode: '11',
+            cityCode: '11001',
+            addressLine1: 'Calle 100 # 10-20',
+            addressLine2: '',
+            postalCode: '',
+            notes: '',
+            useCustomerData: true,
+          },
+          installments: 3,
+          card: { brand: 'VISA', lastFour: '4242' },
+        },
+        draft: null,
+        cardReentryRequired: true,
+      },
+    });
+
+    expect(await screen.findByLabelText('Email')).toHaveValue('ana.gomez@example.com');
+    expect(
+      screen.getByText('Por seguridad, ingresa de nuevo los datos de tu tarjeta.'),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Número de tarjeta')).toHaveValue('');
+  });
+
   it('keeps the checkout form closed on another product', async () => {
     fetchStub.respondJson(aProductDetail());
     renderProductPage({
