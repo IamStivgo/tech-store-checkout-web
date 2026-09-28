@@ -2,7 +2,9 @@ interface Reply {
   readonly status?: number;
   readonly body: unknown;
 }
-type Handler = Reply | ((request: Request) => Reply);
+/** Makes fetch fail as it does without connection. */
+export const NETWORK_FAILURE = 'network-failure';
+type Handler = Reply | typeof NETWORK_FAILURE | ((request: Request) => Reply);
 
 /**
  * Answers fetch by "METHOD /path" (after /api/v1), for flows that send several requests at once.
@@ -20,6 +22,9 @@ export const routeFetch = (routes: Record<string, Handler | readonly Handler[]>)
     const path = new URL(request.url).pathname.replace('/api/v1', '');
     const queue = queues.get(`${request.method} ${path}`);
     const handler = queue && queue.length > 1 ? queue.shift() : queue?.[0];
+    if (handler === NETWORK_FAILURE) {
+      return Promise.reject(new TypeError('Failed to fetch'));
+    }
     const reply =
       typeof handler === 'function' ? handler(request) : (handler ?? { status: 500, body: {} });
     return Promise.resolve(

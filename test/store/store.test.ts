@@ -16,6 +16,7 @@ describe('createAppStore', () => {
       details: null,
       draft: null,
       cardReentryRequired: false,
+      paymentTransactionId: null,
     });
   });
 });

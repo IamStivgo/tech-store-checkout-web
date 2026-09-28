@@ -62,7 +62,11 @@ export const toShippingAddress = (
  * Creates the customer and the transaction (which reserves the stock) and pays it with the card
  * token. Every attempt uses new idempotency keys and the fresh, single-use acceptance tokens.
  */
-export function useCheckoutPayment(newKey: () => string = () => crypto.randomUUID()) {
+export function useCheckoutPayment(
+  /** Called once the transaction exists, before its payment is sent (to recover it on reload). */
+  onTransactionCreated: (transactionId: string) => void = () => undefined,
+  newKey: () => string = () => crypto.randomUUID(),
+) {
   const [createCustomer] = useCreateCustomerMutation();
   const [createTransaction] = useCreateTransactionMutation();
   const [payTransaction] = usePayTransactionMutation();
@@ -92,6 +96,7 @@ export function useCheckoutPayment(newKey: () => string = () => crypto.randomUUI
         },
       }).unwrap();
       transactionId = transaction.id;
+      onTransactionCreated(transaction.id);
       const paid = await payTransaction({
         transactionId: transaction.id,
         idempotencyKey: newKey(),

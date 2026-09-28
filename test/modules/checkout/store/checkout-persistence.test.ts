@@ -23,6 +23,31 @@ describe('checkout persistence', () => {
     expect(loadCheckout(localStorage, later(60_000))).toEqual(checkout);
   });
 
+  it('remembers the transaction whose payment was being sent', () => {
+    const checkout = aCheckoutState({
+      step: 'SUMMARY',
+      details: DETAILS,
+      paymentTransactionId: '015209fe-0eb8-4534-a4b3-dde8145ac37c',
+    });
+
+    saveCheckout(localStorage, checkout, NOW);
+
+    expect(loadCheckout(localStorage, later(1_000))?.paymentTransactionId).toBe(
+      '015209fe-0eb8-4534-a4b3-dde8145ac37c',
+    );
+  });
+
+  it('reads a checkout saved before payments were tracked', () => {
+    const previous: Record<string, unknown> = { ...aCheckoutState() };
+    delete previous.paymentTransactionId;
+    localStorage.setItem(
+      CHECKOUT_STORAGE_KEY,
+      JSON.stringify({ version: 1, savedAt: NOW.getTime(), checkout: previous }),
+    );
+
+    expect(loadCheckout(localStorage, later(1_000))?.paymentTransactionId).toBeNull();
+  });
+
   it('stores only the whitelisted fields, never card data', () => {
     const checkout = { ...aCheckoutState(), cardNumber: '4242424242424242', cvc: '123' };
 

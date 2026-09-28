@@ -11,6 +11,7 @@ import { useGetTransactionQuery } from '../../../../services/api/payments.api';
 import { deliveryEstimate } from '../../../../utils/date/delivery-dates';
 import { formatCop } from '../../../../utils/format-currency';
 import { NotFoundPage } from '../../../not-found';
+import { ReturnCountdown } from '../../components/ReturnCountdown';
 
 import styles from './PaymentResultPage.module.scss';
 
@@ -148,6 +149,9 @@ export function PaymentResultPage() {
               : (transaction.payment?.statusMessage ?? messages.result[outcome].body)}
           </p>
           <Details transaction={transaction} />
+          <ReturnCountdown
+            to={generatePath(ROUTES.product, { productId: transaction.product.id })}
+          />
           <div className={styles.actions}>
             {outcome !== 'approved' && (
               <Link
