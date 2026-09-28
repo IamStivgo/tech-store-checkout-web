@@ -171,6 +171,8 @@ export const messages = {
     },
     product: (name: string, quantity: number) => `${name} × ${quantity}`,
     total: 'Total pagado',
+    // Nothing was charged: the amount is only the order's.
+    totalNotCharged: 'Total del pedido',
     reference: 'Referencia',
     card: (brand: string, lastFour: string) => `${brand} •••• ${lastFour}`,
     tryAgain: 'Intentar de nuevo',

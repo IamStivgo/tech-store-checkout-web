@@ -64,6 +64,8 @@ describe('PaymentResultPage', () => {
       await screen.findByRole('heading', { level: 1, name: 'Pago rechazado' }),
     ).toBeInTheDocument();
     expect(screen.getByText('La transacción fue rechazada (Sandbox)')).toBeInTheDocument();
+    expect(screen.getByText('Total del pedido')).toBeInTheDocument();
+    expect(screen.queryByText('Total pagado')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Intentar de nuevo' })).toHaveAttribute(
       'href',
       `/products/${aTransaction().product.id}`,
