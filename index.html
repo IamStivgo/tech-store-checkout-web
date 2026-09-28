@@ -12,7 +12,12 @@
     <title>Tech Store</title>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Painted before the JavaScript runs; React replaces it with the same header. -->
+    <div id="root">
+      <div class="appShellHeader">
+        <div class="appShellInner"><span class="appShellBrand">Tech Store</span></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

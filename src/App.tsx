@@ -7,8 +7,6 @@ import { ROUTES } from './config/routes';
 import { messages } from './data/messages.es-CO';
 import { CatalogPage } from './modules/catalog';
 import { NotFoundPage } from './modules/not-found';
-import { PaymentResultPage } from './modules/payment-result';
-import { ProductPage } from './modules/product';
 import type { CardTokenizer } from './services/tokenization/card-tokenizer';
 import { CardTokenizerContext } from './services/tokenization/card-tokenizer-context';
 import { FakeCardTokenizer } from './services/tokenization/fake-card-tokenizer';
@@ -34,8 +32,19 @@ export const appRoutes: RouteObject[] = [
     element: <RootLayout />,
     children: [
       { index: true, element: <CatalogPage /> },
-      { path: ROUTES.product, element: <ProductPage /> },
-      { path: ROUTES.paymentResult, element: <PaymentResultPage /> },
+      // The checkout and the result load with their route: the catalog does not wait for them.
+      {
+        path: ROUTES.product,
+        lazy: () =>
+          import('./modules/product').then(({ ProductPage }) => ({ Component: ProductPage })),
+      },
+      {
+        path: ROUTES.paymentResult,
+        lazy: () =>
+          import('./modules/payment-result').then(({ PaymentResultPage }) => ({
+            Component: PaymentResultPage,
+          })),
+      },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

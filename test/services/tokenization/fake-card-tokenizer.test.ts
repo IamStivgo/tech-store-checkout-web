@@ -1,6 +1,9 @@
-import { createCardTokenizer } from '../../../src/services/tokenization/create-card-tokenizer';
+import type { CardInput } from '../../../src/services/tokenization/card-tokenizer';
+import {
+  createCardTokenizer,
+  DeferredCardTokenizer,
+} from '../../../src/services/tokenization/create-card-tokenizer';
 import { FakeCardTokenizer } from '../../../src/services/tokenization/fake-card-tokenizer';
-import { JweCardTokenizer } from '../../../src/services/tokenization/jwe-card-tokenizer';
 
 const card = (number: string) => ({
   number,
@@ -36,7 +39,38 @@ describe('createCardTokenizer', () => {
     expect(createCardTokenizer({ mode: 'fake' })).toBeInstanceOf(FakeCardTokenizer);
     expect(
       createCardTokenizer({ mode: 'jwe', apiUrl: 'https://provider.test/v1', publicKey: 'pub' }),
-    ).toBeInstanceOf(JweCardTokenizer);
+    ).toBeInstanceOf(DeferredCardTokenizer);
+  });
+
+  const CARD: CardInput = {
+    number: '4242424242424242',
+    cvc: '123',
+    expMonth: '12',
+    expYear: '29',
+    holder: 'ANA MARIA GOMEZ',
+  };
+
+  it('loads the real tokenizer once, on the first card', async () => {
+    const load = jest.fn(() => Promise.resolve(new FakeCardTokenizer()));
+    const tokenizer = new DeferredCardTokenizer(load);
+
+    expect(load).not.toHaveBeenCalled();
+    const first = await tokenizer.tokenize(CARD);
+    await tokenizer.tokenize(CARD);
+
+    expect(first.ok).toBe(true);
+    expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports a failed download as a network error and tries again next time', async () => {
+    const load = jest
+      .fn<Promise<FakeCardTokenizer>, []>()
+      .mockRejectedValueOnce(new TypeError('Failed to fetch dynamically imported module'))
+      .mockResolvedValueOnce(new FakeCardTokenizer());
+    const tokenizer = new DeferredCardTokenizer(load);
+
+    expect(await tokenizer.tokenize(CARD)).toEqual({ ok: false, error: 'NETWORK' });
+    expect((await tokenizer.tokenize(CARD)).ok).toBe(true);
   });
 
   it('downloads the encryption key from the store API, on the page origin', async () => {

@@ -1,4 +1,5 @@
-import { loadCheckout, restoreCheckout, saveCheckout } from '../modules/checkout';
+import { loadCheckout, saveCheckout } from '../modules/checkout/store/checkout-persistence';
+import { restoreCheckout } from '../modules/checkout/store/checkout.slice';
 
 import type { AppStore, RootState } from './store';
 
