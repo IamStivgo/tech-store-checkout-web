@@ -5,4 +5,14 @@
 
 :root {
   @include tokens.custom-properties;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    @include tokens.dark-color-properties;
+
+    color-scheme: dark;
+  }
 }
