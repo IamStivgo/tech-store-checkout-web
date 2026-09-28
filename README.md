@@ -8,7 +8,22 @@
 
 SPA mobile-first en React + Redux Toolkit para comprar accesorios tecnológicos con tarjeta de crédito a través de una pasarela de pagos en modo sandbox.
 
-> Proyecto en construcción. Este README se completa a medida que avanza la implementación.
+## Estado de la entrega
+
+- **App en producción:** https://d7vch0fsx8645.cloudfront.net (SPA servida por CloudFront; el API está en `/api/v1`).
+- **Listo:**
+  - design system propio y accesible;
+  - catálogo responsive (1 a 4 columnas) con stock y estados de carga, error y vacío;
+  - página de producto con selector de cantidad y aviso de tarifas;
+  - formulario de checkout (tarjeta, cliente y entrega) con validación y detección de marca;
+  - tokenización de la tarjeta en el navegador (JWE, probada contra el sandbox de la pasarela);
+  - resumen de pago con la cotización del API;
+  - persistencia del checkout ante recargas, sin datos de tarjeta.
+- **Pendiente:** conectar el pago de punta a punta (crear cliente y transacción, tokenizar y pagar), la pantalla de resultado y las autorizaciones del checkout. Dependen del endpoint de pago del API, que está en curso.
+- **Calidad:**
+  - 368 pruebas unitarias con Jest: 100 % de líneas y funciones, ~98 % de ramas;
+  - pruebas E2E con Playwright en iPhone SE, Pixel 7 y Firefox de escritorio;
+  - todo corre en el CI de cada PR.
 
 ## Stack
 
