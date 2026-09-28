@@ -37,5 +37,6 @@ export const aCheckoutState = (overrides: Partial<CheckoutState> = {}): Checkout
     installments: '3',
   },
   cardReentryRequired: false,
+  paymentTransactionId: null,
   ...overrides,
 });

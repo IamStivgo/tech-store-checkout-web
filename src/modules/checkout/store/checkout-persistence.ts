@@ -55,19 +55,30 @@ const persistedSchema = z.object({
       .nullable(),
     draft: draftSchema.nullable(),
     cardReentryRequired: z.boolean(),
+    // Only an id: the payment itself is read again from the API.
+    paymentTransactionId: z.uuid().nullable().default(null),
   }),
 });
 
 /** Saves the checkout; storage can be full or blocked (private mode), which is not an error. */
 export const saveCheckout = (storage: Storage, checkout: CheckoutState, now: Date): void => {
-  const { productId, quantity, step, details, draft, cardReentryRequired } = checkout;
+  const { productId, quantity, step, details, draft, cardReentryRequired, paymentTransactionId } =
+    checkout;
   try {
     storage.setItem(
       CHECKOUT_STORAGE_KEY,
       JSON.stringify({
         version: SCHEMA_VERSION,
         savedAt: now.getTime(),
-        checkout: { productId, quantity, step, details, draft, cardReentryRequired },
+        checkout: {
+          productId,
+          quantity,
+          step,
+          details,
+          draft,
+          cardReentryRequired,
+          paymentTransactionId,
+        },
       }),
     );
   } catch {

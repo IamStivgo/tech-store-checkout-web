@@ -15,7 +15,7 @@ import {
   anApprovedTransaction,
   TRANSACTION_ID,
 } from '../../../../builders/transaction.builder';
-import { routeFetch } from '../../../../services/api/route-fetch';
+import { NETWORK_FAILURE, routeFetch } from '../../../../services/api/route-fetch';
 import { citiesOf, DEPARTMENTS, fillValidCheckoutForm } from '../../../checkout/fill-checkout-form';
 
 const PRODUCT_ID = '7d094266-0b4e-4789-9522-96e1cd7ffa60';
@@ -42,7 +42,7 @@ const ACCEPTANCE = {
   personalDataAuth: { acceptanceToken: 'd.e.f', permalink: 'https://docs.example/data.pdf' },
 };
 
-const checkoutRoutes = (payment: { status?: number; body: unknown }) => ({
+const checkoutRoutes = (payment: { status?: number; body: unknown } | typeof NETWORK_FAILURE) => ({
   [`GET /products/${PRODUCT_ID}`]: { body: aProductDetail() },
   'GET /locations/departments': { body: DEPARTMENTS },
   'GET /locations/departments/11/cities': { body: citiesOf('11001', 'Bogotá, D.C.') },
@@ -54,8 +54,11 @@ const checkoutRoutes = (payment: { status?: number; body: unknown }) => ({
   [`GET /transactions/${TRANSACTION_ID}`]: { body: anApprovedTransaction() },
 });
 
-const renderCheckout = (tokenizer: CardTokenizer = new FakeCardTokenizer()) => {
-  const store = createAppStore();
+const renderCheckout = (
+  tokenizer: CardTokenizer = new FakeCardTokenizer(),
+  preloadedState?: Parameters<typeof createAppStore>[0],
+) => {
+  const store = createAppStore(preloadedState);
   render(
     <Provider store={store}>
       <CardTokenizerContext value={tokenizer}>
@@ -99,7 +102,11 @@ describe('ProductPage payment', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: '¡Pago aprobado!' }),
     ).toBeInTheDocument();
-    expect(store.getState().checkout).toMatchObject({ step: 'PRODUCT', details: null });
+    expect(store.getState().checkout).toMatchObject({
+      step: 'PRODUCT',
+      details: null,
+      paymentTransactionId: null,
+    });
     const payRequest = api
       .requests()
       .find(({ url }) => url.endsWith(`/transactions/${TRANSACTION_ID}/payment`));
@@ -133,7 +140,10 @@ describe('ProductPage payment', () => {
     await user.click(screen.getByRole('button', { name: /^Pagar \$\s50\.900/ }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('La pasarela rechazó el pago.');
-    expect(store.getState().checkout.step).toBe('SUMMARY');
+    expect(store.getState().checkout).toMatchObject({
+      step: 'SUMMARY',
+      paymentTransactionId: null,
+    });
   });
 
   it('follows a payment the provider did not answer in time on the result page', async () => {
@@ -144,6 +154,36 @@ describe('ProductPage payment', () => {
     await reachSummary(user);
 
     await user.click(screen.getByRole('button', { name: /^Pagar \$\s50\.900/ }));
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: '¡Pago aprobado!' }),
+    ).toBeInTheDocument();
+  });
+
+  it('explains that there is no connection when the payment cannot be sent', async () => {
+    routeFetch(checkoutRoutes(NETWORK_FAILURE));
+    const { user } = renderCheckout();
+    await reachSummary(user);
+
+    await user.click(screen.getByRole('button', { name: /^Pagar \$\s50\.900/ }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('No hay conexión a internet.');
+  });
+
+  it('opens the result of a payment interrupted by a reload', async () => {
+    routeFetch(checkoutRoutes({ body: anApprovedTransaction() }));
+
+    renderCheckout(new FakeCardTokenizer(), {
+      checkout: {
+        productId: PRODUCT_ID,
+        quantity: 1,
+        step: 'DETAILS',
+        details: null,
+        draft: null,
+        cardReentryRequired: true,
+        paymentTransactionId: TRANSACTION_ID,
+      },
+    });
 
     expect(
       await screen.findByRole('heading', { level: 1, name: '¡Pago aprobado!' }),

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { generatePath, Link, useNavigate, useParams } from 'react-router';
 
 import { Divider } from '../../../../components/atoms/Divider';
@@ -12,7 +12,7 @@ import { PayWithCardButton } from '../../../../components/organisms/PayWithCardB
 import { ProductGallery } from '../../../../components/organisms/ProductGallery';
 import { ROUTES } from '../../../../config/routes';
 import { messages } from '../../../../data/messages.es-CO';
-import type { ApiError } from '../../../../services/api/api-error';
+import { NETWORK_ERROR, type ApiError } from '../../../../services/api/api-error';
 import type {
   AcceptanceTokens,
   CheckoutQuote,
@@ -32,12 +32,15 @@ import {
   detailsSubmitted,
   draftSaved,
   paymentCompleted,
+  paymentFailed,
+  paymentStarted,
   quantitySelected,
   selectCardReentryRequired,
   selectCheckoutDetails,
   selectCheckoutDraft,
   selectCheckoutProductId,
   selectCheckoutStep,
+  selectPaymentTransactionId,
   selectQuantityFor,
   SummaryBackdrop,
   useCheckoutPayment,
@@ -126,6 +129,9 @@ const toCardInput = ({ number, cvc, expiry, holder }: CheckoutFormValues['card']
 type PaymentFailure = Extract<CheckoutPaymentResult, { ok: false }>;
 
 const paymentErrorMessage = ({ error }: PaymentFailure): string => {
+  if (error.status === NETWORK_ERROR) {
+    return messages.summary.paymentErrors.offline;
+  }
   if (error.code === 'INSUFFICIENT_STOCK' || error.code === 'QUANTITY_LIMIT_EXCEEDED') {
     return messages.summary.paymentErrors.stock;
   }
@@ -167,8 +173,20 @@ function ProductDetails({ product }: { readonly product: ProductDetail }) {
   const cardToken = useRef<string | null>(null);
   const [tokenError, setTokenError] = useState<string>();
   const [paymentError, setPaymentError] = useState<string>();
-  const { pay, paying } = useCheckoutPayment();
+  const { pay, paying } = useCheckoutPayment(
+    useCallback((transactionId: string) => dispatch(paymentStarted(transactionId)), [dispatch]),
+  );
   const navigate = useNavigate();
+  // A reload while the payment was being sent: its result page follows it (read once at load).
+  const [interruptedPayment] = useState(() => selectPaymentTransactionId(store.getState()));
+  useEffect(() => {
+    if (interruptedPayment) {
+      dispatch(paymentCompleted());
+      void navigate(generatePath(ROUTES.paymentResult, { transactionId: interruptedPayment }), {
+        replace: true,
+      });
+    }
+  }, [dispatch, interruptedPayment, navigate]);
   const selected = useAppSelector((state) => selectQuantityFor(state, product.id));
   const maxUnits = product.maxUnitsPerOrder;
   const available = maxUnits > 0;
@@ -213,6 +231,7 @@ function ProductDetails({ product }: { readonly product: ProductDetail }) {
       return;
     }
     if (!result.ok) {
+      dispatch(paymentFailed());
       setPaymentError(paymentErrorMessage(result));
       dispatch(paymentsApi.util.invalidateTags(['AcceptanceTokens']));
     }

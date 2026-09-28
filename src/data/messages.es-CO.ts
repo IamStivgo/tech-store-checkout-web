@@ -150,6 +150,7 @@ export const messages = {
       stock:
         'Ya no hay unidades suficientes de este producto. Ajusta la cantidad e intenta de nuevo.',
       rejected: 'La pasarela rechazó el pago. Revisa los datos e intenta de nuevo.',
+      offline: 'No hay conexión a internet. Revisa tu conexión e intenta de nuevo.',
     },
   },
   result: {
@@ -176,6 +177,12 @@ export const messages = {
     reference: 'Referencia',
     card: (brand: string, lastFour: string) => `${brand} •••• ${lastFour}`,
     tryAgain: 'Intentar de nuevo',
+    countdown: {
+      returning: (seconds: number) => `Volverás al producto en ${seconds} s`,
+      paused: 'Regreso automático en pausa',
+      pause: 'Pausar',
+      resume: 'Reanudar',
+    },
     error: 'No pudimos consultar el estado de tu pago.',
   },
   notFound: {

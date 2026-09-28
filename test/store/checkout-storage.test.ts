@@ -40,6 +40,7 @@ describe('checkout storage', () => {
       step: 'DETAILS',
       details: DETAILS,
       cardReentryRequired: true,
+      paymentTransactionId: null,
     });
   });
 
@@ -49,6 +50,7 @@ describe('checkout storage', () => {
     expect(loadSavedState(localStorage, NOW)?.checkout).toMatchObject({
       step: 'DETAILS',
       cardReentryRequired: false,
+      paymentTransactionId: null,
     });
   });
 

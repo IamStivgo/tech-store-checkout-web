@@ -42,6 +42,8 @@ export interface CheckoutState {
   readonly draft: CheckoutDraft | null;
   /** The card data was lost (reload after the form was sent): the buyer types it again. */
   readonly cardReentryRequired: boolean;
+  /** Transaction whose payment was being sent: after a reload, its result page is opened. */
+  readonly paymentTransactionId: string | null;
 }
 
 export interface ProductSelection {
@@ -58,6 +60,7 @@ const initialState: CheckoutState = {
   details: null,
   draft: null,
   cardReentryRequired: false,
+  paymentTransactionId: null,
 };
 
 /**
@@ -96,6 +99,14 @@ export const checkoutSlice = createSlice({
     detailsEdited(state) {
       state.step = 'DETAILS';
     },
+    /** The transaction was created and its payment is being sent. */
+    paymentStarted(state, { payload }: PayloadAction<string>) {
+      state.paymentTransactionId = payload;
+    },
+    /** The payment could not be sent: the buyer stays on the summary to try again. */
+    paymentFailed(state) {
+      state.paymentTransactionId = null;
+    },
     /** The payment was sent: the next purchase starts from scratch. */
     paymentCompleted() {
       return initialState;
@@ -107,6 +118,7 @@ export const checkoutSlice = createSlice({
     selectCheckoutDetails: (state) => state.details,
     selectCheckoutDraft: (state) => state.draft,
     selectCardReentryRequired: (state) => state.cardReentryRequired,
+    selectPaymentTransactionId: (state) => state.paymentTransactionId,
     /** The quantity chosen for this product; another product starts again at one unit. */
     selectQuantityFor: (state, productId: string) =>
       state.productId === productId ? state.quantity : DEFAULT_QUANTITY,
@@ -121,6 +133,8 @@ export const {
   detailsEdited,
   draftSaved,
   paymentCompleted,
+  paymentFailed,
+  paymentStarted,
 } = checkoutSlice.actions;
 export const {
   selectCardReentryRequired,
@@ -128,5 +142,6 @@ export const {
   selectCheckoutStep,
   selectCheckoutProductId,
   selectCheckoutDetails,
+  selectPaymentTransactionId,
   selectQuantityFor,
 } = checkoutSlice.selectors;

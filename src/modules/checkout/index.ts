@@ -13,6 +13,8 @@ export {
   detailsSubmitted,
   draftSaved,
   paymentCompleted,
+  paymentFailed,
+  paymentStarted,
   quantitySelected,
   restoreCheckout,
   selectCardReentryRequired,
@@ -20,6 +22,7 @@ export {
   selectCheckoutDraft,
   selectCheckoutProductId,
   selectCheckoutStep,
+  selectPaymentTransactionId,
   selectQuantityFor,
 } from './store/checkout.slice';
 export type {

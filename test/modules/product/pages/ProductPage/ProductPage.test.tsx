@@ -96,6 +96,7 @@ describe('ProductPage', () => {
         details: null,
         draft: null,
         cardReentryRequired: false,
+        paymentTransactionId: null,
       },
     });
 
@@ -178,6 +179,7 @@ describe('ProductPage', () => {
           installments: '1',
         },
         cardReentryRequired: false,
+        paymentTransactionId: null,
       },
     });
     const user = userEvent.setup();
@@ -219,6 +221,7 @@ describe('ProductPage', () => {
         },
         draft: null,
         cardReentryRequired: true,
+        paymentTransactionId: null,
       },
     });
 
@@ -239,6 +242,7 @@ describe('ProductPage', () => {
         details: null,
         draft: null,
         cardReentryRequired: false,
+        paymentTransactionId: null,
       },
     });
 
