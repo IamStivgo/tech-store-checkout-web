@@ -1,8 +1,13 @@
 import {
+  checkoutClosed,
   checkoutStarted,
+  detailsSubmitted,
   quantitySelected,
+  selectCheckoutDetails,
+  selectCheckoutProductId,
   selectCheckoutStep,
   selectQuantityFor,
+  type CheckoutDetails,
 } from '../../../../src/modules/checkout/store/checkout.slice';
 import { createAppStore } from '../../../../src/store/store';
 
@@ -33,5 +38,44 @@ describe('checkout slice', () => {
 
     expect(selectCheckoutStep(store.getState())).toBe('DETAILS');
     expect(selectQuantityFor(store.getState(), PRODUCT_ID)).toBe(2);
+  });
+
+  it('goes back to the product step when the form is closed', () => {
+    const store = createAppStore();
+    store.dispatch(checkoutStarted({ productId: PRODUCT_ID, quantity: 2 }));
+
+    store.dispatch(checkoutClosed());
+
+    expect(selectCheckoutStep(store.getState())).toBe('PRODUCT');
+    expect(selectCheckoutProductId(store.getState())).toBe(PRODUCT_ID);
+  });
+
+  it('keeps the submitted details, without card data, and moves to the summary', () => {
+    const store = createAppStore();
+    const details: CheckoutDetails = {
+      customer: {
+        fullName: 'Ana María Gómez',
+        email: 'ana.gomez@example.com',
+        phone: '3001234567',
+        legalIdType: 'CC',
+        legalId: '1020304050',
+      },
+      shipping: {
+        departmentCode: '11',
+        cityCode: '11001',
+        addressLine1: 'Calle 100 # 10-20',
+        addressLine2: '',
+        postalCode: '',
+        notes: '',
+        useCustomerData: true,
+      },
+      installments: 1,
+      card: { brand: 'VISA', lastFour: '4242' },
+    };
+
+    store.dispatch(detailsSubmitted(details));
+
+    expect(selectCheckoutStep(store.getState())).toBe('SUMMARY');
+    expect(selectCheckoutDetails(store.getState())).toEqual(details);
   });
 });

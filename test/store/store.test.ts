@@ -13,6 +13,7 @@ describe('createAppStore', () => {
       productId: null,
       quantity: 1,
       step: 'PRODUCT',
+      details: null,
     });
   });
 });

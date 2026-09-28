@@ -1,12 +1,26 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
+import type { Installments } from '../../../data/installments';
+import type { CardBrand } from '../../../utils/card';
+import type { CustomerFormValues } from '../schemas/customer.schema';
+import type { ShippingFormValues } from '../schemas/shipping.schema';
+
 /** Checkout steps shown as layers over the product page (frontend design §3). */
-export type CheckoutStep = 'PRODUCT' | 'DETAILS';
+export type CheckoutStep = 'PRODUCT' | 'DETAILS' | 'SUMMARY';
+
+/** What the summary needs from the form. Never the card number or the CVC. */
+export interface CheckoutDetails {
+  readonly customer: CustomerFormValues;
+  readonly shipping: ShippingFormValues;
+  readonly installments: Installments;
+  readonly card: { readonly brand: CardBrand; readonly lastFour: string };
+}
 
 export interface CheckoutState {
   readonly productId: string | null;
   readonly quantity: number;
   readonly step: CheckoutStep;
+  readonly details: CheckoutDetails | null;
 }
 
 export interface ProductSelection {
@@ -20,6 +34,7 @@ const initialState: CheckoutState = {
   productId: null,
   quantity: DEFAULT_QUANTITY,
   step: 'PRODUCT',
+  details: null,
 };
 
 export const checkoutSlice = createSlice({
@@ -35,14 +50,29 @@ export const checkoutSlice = createSlice({
       state.quantity = payload.quantity;
       state.step = 'DETAILS';
     },
+    checkoutClosed(state) {
+      state.step = 'PRODUCT';
+    },
+    detailsSubmitted(state, { payload }: PayloadAction<CheckoutDetails>) {
+      state.details = payload;
+      state.step = 'SUMMARY';
+    },
   },
   selectors: {
     selectCheckoutStep: (state) => state.step,
+    selectCheckoutProductId: (state) => state.productId,
+    selectCheckoutDetails: (state) => state.details,
     /** The quantity chosen for this product; another product starts again at one unit. */
     selectQuantityFor: (state, productId: string) =>
       state.productId === productId ? state.quantity : DEFAULT_QUANTITY,
   },
 });
 
-export const { quantitySelected, checkoutStarted } = checkoutSlice.actions;
-export const { selectCheckoutStep, selectQuantityFor } = checkoutSlice.selectors;
+export const { quantitySelected, checkoutStarted, checkoutClosed, detailsSubmitted } =
+  checkoutSlice.actions;
+export const {
+  selectCheckoutStep,
+  selectCheckoutProductId,
+  selectCheckoutDetails,
+  selectQuantityFor,
+} = checkoutSlice.selectors;
