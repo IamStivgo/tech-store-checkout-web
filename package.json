@@ -1,6 +1,6 @@
 {
   "name": "tech-store-checkout-web",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Mobile-first checkout SPA for a tech accessories store with credit card payments.",
   "license": "UNLICENSED",
