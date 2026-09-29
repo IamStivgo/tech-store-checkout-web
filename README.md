@@ -22,9 +22,13 @@ Flujo de 5 pasos: **Producto → Tarjeta y entrega → Resumen → Resultado →
 2. **Tarjeta y entrega (modal):** tarjeta con detección de marca y validación (Luhn, vencimiento, CVC), datos del cliente y dirección con departamento y municipio (DIVIPOLA). Al continuar, la tarjeta se **tokeniza en el navegador**.
 3. **Resumen (backdrop):** desglose calculado por el API (productos, tarifa de servicio, envío por zona, envío gratis), fecha estimada de entrega y las dos **aceptaciones** obligatorias con enlace a sus documentos.
 4. **Pago y resultado:** crea el cliente y la transacción (que reserva el stock) y paga con claves de idempotencia; la página `/transactions/:id` muestra el pago aprobado (referencia, total y fecha de entrega), rechazado (con el motivo) o vencido, y consulta de nuevo mientras sigue pendiente.
-5. **Regreso a la tienda:** el checkout se limpia y el stock se vuelve a consultar.
+5. **Regreso a la tienda:** una cuenta regresiva de 15 s (que se puede pausar, WCAG 2.2.1) vuelve al producto; el checkout se limpia y el stock se vuelve a consultar.
 
-Ante una recarga se conserva lo escrito en el formulario (nunca la tarjeta) y, si ya se había llegado al resumen, se pide la tarjeta otra vez.
+**Resiliencia ante recargas:**
+
+- Se conserva lo escrito en el formulario (nunca la tarjeta) y, si ya se había llegado al resumen, se pide la tarjeta otra vez.
+- Si la página se recarga mientras se envía el pago, se abre la página de resultado de esa transacción en lugar de permitir un segundo pago.
+- Si el pago falla por falta de conexión, el resumen lo indica con un mensaje propio y se puede reintentar.
 
 ## Seguridad en el cliente
 
@@ -71,6 +75,7 @@ src/
 │   ├── product/
 │   ├── checkout/
 │   ├── payment-result/
+│   ├── privacy/
 │   └── not-found/
 ├── store/               # Configuración del store de Redux
 ├── services/            # API (RTK Query), tokenización de tarjeta y persistencia
@@ -89,15 +94,15 @@ Las reglas de dependencia entre capas se verifican con ESLint (`eslint-plugin-bo
 
 - `store/` combina el slice `checkout` (paso actual, producto, cantidad, borrador y detalles sin tarjeta) y la caché de RTK Query.
 - `services/api/` define los endpoints con RTK Query (catálogo, ubicaciones, cotización, clientes, transacciones, pagos) y normaliza los errores Problem Details.
-- El checkout se guarda en `localStorage` con lista blanca, versión y vencimiento de 30 minutos; los datos de tarjeta nunca se guardan.
+- El checkout (paso, producto, cantidad, borrador y la transacción en pago) se guarda cifrado en `localStorage` (`services/storage/encrypted-storage.ts`) con lista blanca, versión y vencimiento de 30 minutos; los datos de tarjeta nunca se guardan.
 
 ## Pruebas y cobertura
 
 | Statements | Branches | Functions | Lines   |
 | ---------- | -------- | --------- | ------- |
-| 99,64 %    | 96,01 %  | 99,62 %   | 99,61 % |
+| 97,07 %    | 94,52 %  | 92,46 %   | 97,47 % |
 
-Medido el 2026-09-28 con `npm test` (389 pruebas en 70 suites). Umbrales del CI: 85 % en statements, lines y functions y 81 % en branches. Las pruebas viven en `test/` con la misma ruta que `src/`.
+Medido el 2026-09-29 con `npm test` (409 pruebas en 72 suites) sobre la versión `1.1.0`. Umbrales del CI: 85 % en statements, lines y functions y 81 % en branches. Las pruebas viven en `test/` con la misma ruta que `src/`.
 
 **E2E con Playwright** (`npm run test:e2e`, en el CI dentro de la imagen oficial): catálogo, producto, formulario, recarga y la compra completa aprobada y rechazada, en iPhone SE (WebKit, 320 px), Pixel 7 (Chromium) y Firefox de escritorio (1440 px), con el API simulado por `page.route`. Además, la compra real se verificó en producción desde el navegador con las dos tarjetas de prueba.
 
