@@ -21,6 +21,7 @@ const E1_QUOTE: CheckoutQuote = {
   quantity: 1,
   unitPrice: cents(3_990_000),
   productAmount: cents(3_990_000),
+  vat: { ratePercent: 19, base: cents(3_352_900), amount: cents(637_100) },
   serviceFee: cents(300_000),
   deliveryFee: cents(800_000),
   total: cents(5_090_000),
@@ -39,6 +40,7 @@ const E3_QUOTE: CheckoutQuote = {
   quantity: 2,
   unitPrice: cents(11_990_000),
   productAmount: cents(23_980_000),
+  vat: { ratePercent: 19, base: cents(20_151_300), amount: cents(3_828_700) },
   deliveryFee: cents(0),
   total: cents(24_280_000),
   delivery: {
