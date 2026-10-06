@@ -1,7 +1,9 @@
 export { CheckoutModal } from './components/CheckoutModal';
+export { OrderSummary } from './components/OrderSummary';
 export { SummaryBackdrop } from './components/SummaryBackdrop';
 export { useCheckoutPayment } from './hooks/use-checkout-payment';
 export type { CheckoutPaymentResult } from './hooks/use-checkout-payment';
+export type { OrderPreview } from './components/OrderSummary';
 export type { CheckoutModalProps } from './components/CheckoutModal';
 export type { CheckoutFormValues } from './schemas/checkout-form.schema';
 export {

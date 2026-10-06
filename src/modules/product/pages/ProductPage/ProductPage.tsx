@@ -280,6 +280,7 @@ function ProductDetails({ product }: { readonly product: ProductDetail }) {
         cardReentryRequired={cardReentryRequired}
         onDraftChange={saveDraft}
         submitError={tokenError}
+        order={{ quantity, unitPriceInCents: product.price.amountInCents }}
       />
       {details && (
         <SummaryBackdrop
