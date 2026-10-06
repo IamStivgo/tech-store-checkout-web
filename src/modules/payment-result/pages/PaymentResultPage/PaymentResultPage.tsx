@@ -68,6 +68,18 @@ function Details({ transaction }: { readonly transaction: Transaction }) {
           <dd />
         </div>
       )}
+      {amounts.vat && (
+        <>
+          <div className={styles.row}>
+            <dt>{messages.result.productsBeforeVat}</dt>
+            <dd>{formatCop(amounts.vat.base.amountInCents)}</dd>
+          </div>
+          <div className={styles.row}>
+            <dt>{messages.result.vat(amounts.vat.ratePercent)}</dt>
+            <dd>{formatCop(amounts.vat.amount.amountInCents)}</dd>
+          </div>
+        </>
+      )}
       <div className={styles.row}>
         <dt>
           {transaction.status === 'APPROVED'

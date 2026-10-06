@@ -50,6 +50,36 @@ test.describe('Payment', () => {
     await page.screenshot({ path: testInfo.outputPath('payment-approved.png'), fullPage: true });
   });
 
+  test('shows the product VAT in the form, the summary and the result', async ({ page }) => {
+    await serveCheckoutApi(page, 'APPROVED');
+    await page.goto(`/products/${CABLE_ID}`);
+    await page.getByRole('button', { name: 'Pagar con tarjeta de crédito' }).click();
+    const form = page.getByRole('dialog', { name: 'Pago con tarjeta' });
+
+    const order = form.getByRole('region', { name: 'Tu pedido' });
+    await expect(order).toContainText(/Valor sin IVA\s*\$\s33\.529/);
+    await expect(order).toContainText(/IVA \(19 %\)\s*\$\s6\.371/);
+    await expect(order).toContainText(/Total productos\s*\$\s39\.900/);
+
+    await fillCheckoutForm(form, '4242424242424242');
+    await form.getByRole('button', { name: 'Continuar' }).click();
+    const summary = page.getByRole('dialog', { name: 'Resumen de pago' });
+    await expect(summary).toContainText(/Productos \(1\) sin IVA\s*\$\s33\.529/);
+    await expect(summary).toContainText(/IVA \(19 %\)\s*\$\s6\.371/);
+    await expect(summary).toContainText(/Tarifa de servicio\s*\$\s3\.000/);
+    await expect(summary).toContainText(/Envío · .*\$\s8\.000/);
+    await expect(summary).toContainText(/Total\s*\$\s50\.900/);
+
+    await summary.getByRole('checkbox', { name: /términos y condiciones/ }).check();
+    await summary.getByRole('checkbox', { name: /datos personales/ }).check();
+    await summary.getByRole('button', { name: /^Pagar \$\s50\.900/ }).click();
+
+    await expect(page.getByRole('heading', { level: 1, name: '¡Pago aprobado!' })).toBeVisible();
+    await expect(page.getByRole('region')).toContainText(/Productos sin IVA\s*\$\s33\.529/);
+    await expect(page.getByRole('region')).toContainText(/IVA \(19 %\)\s*\$\s6\.371/);
+    await expect(page.getByRole('region')).toContainText(/Total pagado\s*\$\s50\.900/);
+  });
+
   test('explains a declined payment and goes back to the product to try again', async ({
     page,
   }) => {

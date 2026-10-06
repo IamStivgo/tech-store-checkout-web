@@ -57,6 +57,27 @@ describe('PaymentResultPage', () => {
     expect(screen.getByText('Volverás al producto en 15 s')).toBeInTheDocument();
   });
 
+  it('splits the VAT stored in the transaction before the total', async () => {
+    fetchStub.respondJson(anApprovedTransaction());
+    renderResult();
+
+    await screen.findByRole('heading', { level: 1, name: '¡Pago aprobado!' });
+    const page = screen.getByRole('region');
+    expect(page).toHaveTextContent(/Productos sin IVA\s*\$\s33\.529/);
+    expect(page).toHaveTextContent(/IVA \(19 %\)\s*\$\s6\.371/);
+  });
+
+  it('shows no VAT rows for a transaction created before the VAT was recorded', async () => {
+    const transaction = anApprovedTransaction();
+    fetchStub.respondJson({ ...transaction, amounts: { ...transaction.amounts, vat: null } });
+    renderResult();
+
+    await screen.findByRole('heading', { level: 1, name: '¡Pago aprobado!' });
+    const page = screen.getByRole('region');
+    expect(page).toHaveTextContent(/Total pagado\s*\$\s50\.900/);
+    expect(page).not.toHaveTextContent('IVA');
+  });
+
   it('explains a declined payment and offers to try again', async () => {
     fetchStub.respondJson(aDeclinedTransaction());
     renderResult();
