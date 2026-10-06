@@ -148,7 +148,9 @@ describe('SummaryBackdrop', () => {
     expect(await within(dialog).findByText('Total')).toBeInTheDocument();
     expect(dialog).toHaveTextContent('Cable USB-C a USB-C 2 m (100 W) × 1');
     expect(dialog).toHaveTextContent('Envío a Bogotá, D.C.');
-    expect(dialog).toHaveTextContent('Productos (1)');
+    expect(dialog).toHaveTextContent(/Productos \(1\) sin IVA\s*\$\s33\.529/);
+    expect(dialog).toHaveTextContent(/IVA \(19 %\)\s*\$\s6\.371/);
+    expect(dialog).toHaveTextContent(/Tarifa de servicio\s*\$\s3\.000/);
     expect(dialog).toHaveTextContent('Envío · Bogotá, D.C.');
     expect(dialog).toHaveTextContent('VISA •••• 4242 · 1 cuota');
     expect(dialog).toHaveTextContent('Llega el viernes 25 de septiembre');
@@ -162,7 +164,9 @@ describe('SummaryBackdrop', () => {
     const dialog = await screen.findByRole('dialog');
     expect(await within(dialog).findByText('Gratis')).toBeInTheDocument();
     expect(dialog).toHaveTextContent('Compras desde $ 150.000');
-    expect(dialog).toHaveTextContent('2 × $ 119.900');
+    expect(dialog).toHaveTextContent(/Productos \(2\) sin IVA\s*\$\s201\.513/);
+    expect(dialog).toHaveTextContent(/IVA \(19 %\)\s*\$\s38\.287/);
+    expect(dialog).not.toHaveTextContent('2 × $ 119.900');
     expect(dialog).toHaveTextContent('VISA •••• 4242 · 3 cuotas');
     expect(dialog).toHaveTextContent('Llega entre el lunes 28 y el martes 29 de septiembre');
     expect(payButton()).toHaveTextContent('Pagar $ 242.800');

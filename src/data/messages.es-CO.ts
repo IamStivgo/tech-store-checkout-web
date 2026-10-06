@@ -129,7 +129,8 @@ export const messages = {
     edit: 'Editar',
     productQuantity: (name: string, quantity: number) => `${name} × ${quantity}`,
     shipTo: (city: string) => `Envío a ${city}`,
-    products: (quantity: number) => `Productos (${quantity})`,
+    productsBeforeVat: (quantity: number) => `Productos (${quantity}) sin IVA`,
+    vat: (rate: number) => `IVA (${rate} %)`,
     unitPrice: (quantity: number, unitPrice: string) => `${quantity} × ${unitPrice}`,
     serviceFee: 'Tarifa de servicio',
     delivery: (city: string) => `Envío · ${city}`,
@@ -180,6 +181,8 @@ export const messages = {
       body: 'La reserva del producto expiró o fue cancelada. No se realizó ningún cobro.',
     },
     product: (name: string, quantity: number) => `${name} × ${quantity}`,
+    productsBeforeVat: 'Productos sin IVA',
+    vat: (rate: number) => `IVA (${rate} %)`,
     total: 'Total pagado',
     // Nothing was charged: the amount is only the order's.
     totalNotCharged: 'Total del pedido',
