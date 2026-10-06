@@ -15,10 +15,17 @@ export interface PriceBreakdownProps {
   readonly rows: readonly PriceBreakdownRow[];
   readonly totalLabel: string;
   readonly totalInCents: number;
+  /** Second line under the total label, e.g. "2 × $ 119.900". */
+  readonly totalDetail?: string;
 }
 
 /** Charges of the order and their total, with the amounts aligned and in tabular numbers. */
-export function PriceBreakdown({ rows, totalLabel, totalInCents }: PriceBreakdownProps) {
+export function PriceBreakdown({
+  rows,
+  totalLabel,
+  totalInCents,
+  totalDetail,
+}: PriceBreakdownProps) {
   return (
     <dl className={styles.breakdown}>
       {rows.map(({ label, detail, amountInCents, valueText }) => (
@@ -33,7 +40,10 @@ export function PriceBreakdown({ rows, totalLabel, totalInCents }: PriceBreakdow
         </div>
       ))}
       <div className={`${styles.row} ${styles.total}`}>
-        <dt className={styles.label}>{totalLabel}</dt>
+        <dt className={styles.label}>
+          {totalLabel}
+          {totalDetail && <span className={styles.detail}>{totalDetail}</span>}
+        </dt>
         <dd className={styles.amount}>{formatCop(totalInCents)}</dd>
       </div>
     </dl>
