@@ -18,10 +18,10 @@ SPA mobile-first en React + Redux Toolkit para comprar accesorios tecnológicos 
 
 Flujo de 5 pasos: **Producto → Tarjeta y entrega → Resumen → Resultado → Producto**.
 
-1. **Catálogo y producto:** grilla responsive (1 a 4 columnas) con stock en tiempo real, página de producto con cantidad (hasta el máximo por pedido) y aviso de tarifas.
-2. **Tarjeta y entrega (modal):** tarjeta con detección de marca y validación (Luhn, vencimiento, CVC), datos del cliente y dirección con departamento y municipio (DIVIPOLA). Al continuar, la tarjeta se **tokeniza en el navegador**.
-3. **Resumen (backdrop):** desglose calculado por el API (productos, tarifa de servicio, envío por zona, envío gratis), fecha estimada de entrega y las dos **aceptaciones** obligatorias con enlace a sus documentos.
-4. **Pago y resultado:** crea el cliente y la transacción (que reserva el stock) y paga con claves de idempotencia; la página `/transactions/:id` muestra el pago aprobado (referencia, total y fecha de entrega), rechazado (con el motivo) o vencido, y consulta de nuevo mientras sigue pendiente.
+1. **Catálogo y producto:** grilla responsive (1 a 4 columnas) con stock en tiempo real, página de producto con cantidad (hasta el máximo por pedido), precio con IVA incluido y aviso de tarifas.
+2. **Tarjeta y entrega (modal):** tarjeta con detección de marca y validación (Luhn, vencimiento, CVC), datos del cliente y dirección con departamento y municipio (DIVIPOLA). Arriba del formulario, "Tu pedido" muestra el valor de los productos sin IVA y el IVA (vista previa calculada en el navegador). Al continuar, la tarjeta se **tokeniza en el navegador**.
+3. **Resumen (backdrop):** desglose calculado por el API (productos sin IVA, IVA del 19 %, tarifa de servicio, envío por zona, envío gratis), fecha estimada de entrega y las dos **aceptaciones** obligatorias con enlace a sus documentos.
+4. **Pago y resultado:** crea el cliente y la transacción (que reserva el stock) y paga con claves de idempotencia; la página `/transactions/:id` muestra el pago aprobado (referencia, productos sin IVA, IVA guardado en la transacción, total y fecha de entrega), rechazado (con el motivo) o vencido, y consulta de nuevo mientras sigue pendiente.
 5. **Regreso a la tienda:** una cuenta regresiva de 15 s (que se puede pausar, WCAG 2.2.1) vuelve al producto; el checkout se limpia y el stock se vuelve a consultar.
 
 **Resiliencia ante recargas:**
@@ -100,11 +100,11 @@ Las reglas de dependencia entre capas se verifican con ESLint (`eslint-plugin-bo
 
 | Statements | Branches | Functions | Lines   |
 | ---------- | -------- | --------- | ------- |
-| 97,07 %    | 94,52 %  | 92,46 %   | 97,47 % |
+| 97,13 %    | 94,58 %  | 92,58 %   | 97,52 % |
 
-Medido el 2026-09-29 con `npm test` (409 pruebas en 72 suites) sobre la versión `1.1.0`. Umbrales del CI: 85 % en statements, lines y functions y 81 % en branches. Las pruebas viven en `test/` con la misma ruta que `src/`.
+Medido el 2026-10-06 con `npm test` (427 pruebas en 74 suites) sobre la versión `1.2.0`. Umbrales del CI: 85 % en statements, lines y functions y 81 % en branches. Las pruebas viven en `test/` con la misma ruta que `src/`.
 
-**E2E con Playwright** (`npm run test:e2e`, en el CI dentro de la imagen oficial): catálogo, producto, formulario, recarga y la compra completa aprobada y rechazada, en iPhone SE (WebKit, 320 px), Pixel 7 (Chromium) y Firefox de escritorio (1440 px), con el API simulado por `page.route`. Además, la compra real se verificó en producción desde el navegador con las dos tarjetas de prueba.
+**E2E con Playwright** (`npm run test:e2e`, en el CI dentro de la imagen oficial): catálogo, producto, formulario, recarga y la compra completa aprobada y rechazada (con el desglose del IVA en el modal, el resumen y el resultado), en iPhone SE (WebKit, 320 px), Pixel 7 (Chromium) y Firefox de escritorio (1440 px), con el API simulado por `page.route`. Además, la compra real se verificó en producción desde el navegador con las dos tarjetas de prueba.
 
 ## Ejecución local
 
@@ -162,6 +162,7 @@ El API publica su contrato OpenAPI en cada release ([tech-store-checkout-api](ht
 ## Decisiones y limitaciones
 
 - **Atomic Design híbrido:** la UI pura por niveles atómicos (probada solo con props) y la lógica en módulos de negocio; las capas se verifican con ESLint.
+- **IVA:** el precio ya incluye el 19 % y solo los productos lo llevan (la tarifa de servicio y el envío no). La API lo calcula y lo guarda en la transacción; el resumen y la página de resultado muestran ese valor. El modal, que se abre antes de tener cotización, calcula una vista previa con la misma fórmula y la tasa copiada en `src/config/constants.ts`: si la tasa de la API cambia, hay que actualizar esa constante. Las transacciones anteriores a la v1.2.0 no traen IVA y no lo muestran.
 - **Resultado en su propia ruta** (`/transactions/:id`): se puede recargar o compartir y sigue consultando el estado mientras el pago está pendiente.
 
 ## Autor
