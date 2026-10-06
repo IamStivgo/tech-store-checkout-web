@@ -95,12 +95,12 @@ function Breakdown({ quote, city }: { readonly quote: CheckoutQuote; readonly ci
     <PriceBreakdown
       rows={[
         {
-          label: messages.summary.products(quantity),
-          detail:
-            quantity > 1
-              ? messages.summary.unitPrice(quantity, formatCop(quote.unitPrice.amountInCents))
-              : undefined,
-          amountInCents: quote.productAmount.amountInCents,
+          label: messages.summary.productsBeforeVat(quantity),
+          amountInCents: quote.vat.base.amountInCents,
+        },
+        {
+          label: messages.summary.vat(quote.vat.ratePercent),
+          amountInCents: quote.vat.amount.amountInCents,
         },
         { label: messages.summary.serviceFee, amountInCents: quote.serviceFee.amountInCents },
         {

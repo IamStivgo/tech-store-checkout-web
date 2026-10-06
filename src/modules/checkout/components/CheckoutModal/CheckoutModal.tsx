@@ -16,6 +16,7 @@ import {
 import type { CheckoutDraft } from '../../store/checkout.slice';
 import { CardSection } from '../CardSection';
 import { CustomerSection } from '../CustomerSection';
+import { OrderSummary, type OrderPreview } from '../OrderSummary';
 import { ShippingSection } from '../ShippingSection';
 
 import styles from './CheckoutModal.module.scss';
@@ -86,6 +87,8 @@ export interface CheckoutModalProps {
   readonly onDraftChange?: (draft: CheckoutDraft) => void;
   /** Why the card could not be tokenized after a valid submit. */
   readonly submitError?: string;
+  /** What is being bought: shows the products with the VAT they include above the form. */
+  readonly order?: OrderPreview;
 }
 
 /** Step 2 of the checkout: card, customer and delivery data in one validated form. */
@@ -98,6 +101,7 @@ export function CheckoutModal({
   cardReentryRequired = false,
   onDraftChange,
   submitError,
+  order,
 }: CheckoutModalProps) {
   const formId = useId();
   const schema = useMemo(() => createCheckoutFormSchema(now), [now]);
@@ -160,6 +164,7 @@ export function CheckoutModal({
           noValidate
           onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
         >
+          {order && <OrderSummary order={order} />}
           {submitError && <Banner variant="danger">{submitError}</Banner>}
           {isSubmitted && errorCount > 0 && (
             <Banner variant="danger">{messages.checkout.errorSummary(errorCount)}</Banner>

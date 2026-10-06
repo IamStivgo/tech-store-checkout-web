@@ -16,6 +16,7 @@ export const aTransaction = (overrides: Partial<Transaction> = {}): Transaction 
   quantity: 1,
   amounts: {
     productAmount: cents(3_990_000),
+    vat: { ratePercent: 19, base: cents(3_352_900), amount: cents(637_100) },
     serviceFee: cents(300_000),
     deliveryFee: cents(800_000),
     total: cents(5_090_000),

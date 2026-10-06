@@ -127,6 +127,21 @@ describe('ProductPage', () => {
     expect(store.getState().checkout.step).toBe('PRODUCT');
   });
 
+  it('shows the VAT of the chosen units in the checkout form', async () => {
+    fetchStub.respondJson(aProductDetail());
+    fetchStub.respondJson({ data: [], meta: { count: 0 } });
+    renderProductPage();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Aumentar cantidad' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Pagar con tarjeta de crédito' }));
+
+    const order = within(screen.getByRole('region', { name: 'Tu pedido' }));
+    const amounts = order
+      .getAllByRole('definition')
+      .map((value) => value.textContent.replace(/\u00a0/g, ' '));
+    expect(amounts).toEqual(['$ 67.059', '$ 12.741', '$ 79.800']);
+  });
+
   it('keeps only the brand and last four digits of the card when the form is sent', async () => {
     fetchStub.respondJson(aProductDetail());
     fetchStub.respondJson(DEPARTMENTS);

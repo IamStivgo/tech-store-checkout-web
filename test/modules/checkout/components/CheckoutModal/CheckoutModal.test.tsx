@@ -42,6 +42,18 @@ describe('CheckoutModal', () => {
     fetchStub.restore();
   });
 
+  it('shows the order with its VAT above the form when there is one', () => {
+    renderModal({ order: { quantity: 1, unitPriceInCents: 11_990_000 } });
+
+    expect(screen.getByRole('region', { name: 'Tu pedido' })).toBeInTheDocument();
+  });
+
+  it('shows no order without one', () => {
+    renderModal();
+
+    expect(screen.queryByRole('region', { name: 'Tu pedido' })).not.toBeInTheDocument();
+  });
+
   it('shows the card, customer and delivery sections in a dialog that can be closed', async () => {
     const { onClose, user } = renderModal();
 

@@ -38,4 +38,25 @@ describe('PriceBreakdown', () => {
     ]);
     expect(screen.getByText('Gratis')).toHaveClass('highlight');
   });
+
+  it('shows a detail under the total when there is one', () => {
+    render(
+      <PriceBreakdown
+        rows={[{ label: 'Valor sin IVA', amountInCents: 20_151_300 }]}
+        totalLabel="Total productos"
+        totalInCents={23_980_000}
+        totalDetail="2 × $ 119.900"
+      />,
+    );
+
+    const terms = screen.getAllByRole('term');
+    expect(terms[1]?.textContent.replace(/\u00a0/g, ' ')).toBe('Total productos2 × $ 119.900');
+    expect(screen.getByText('2 × $ 119.900')).toHaveClass('detail');
+  });
+
+  it('shows no detail under the total by default', () => {
+    render(<PriceBreakdown rows={[]} totalLabel="Total" totalInCents={5_090_000} />);
+
+    expect(screen.getByRole('term').textContent).toBe('Total');
+  });
 });

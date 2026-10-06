@@ -42,6 +42,13 @@ export const messages = {
   },
   checkout: {
     title: 'Pago con tarjeta',
+    order: {
+      title: 'Tu pedido',
+      subtotal: 'Valor sin IVA',
+      vat: (rate: number) => `IVA (${rate} %)`,
+      total: 'Total productos',
+      feesLater: 'La tarifa de servicio y el envío se suman en el resumen y no llevan IVA.',
+    },
     tokenization: {
       NETWORK: 'No pudimos verificar tu tarjeta. Revisa tu conexión e intenta de nuevo.',
       INVALID_CARD: 'La pasarela no aceptó los datos de la tarjeta. Revísalos e intenta de nuevo.',
@@ -122,7 +129,8 @@ export const messages = {
     edit: 'Editar',
     productQuantity: (name: string, quantity: number) => `${name} × ${quantity}`,
     shipTo: (city: string) => `Envío a ${city}`,
-    products: (quantity: number) => `Productos (${quantity})`,
+    productsBeforeVat: (quantity: number) => `Productos (${quantity}) sin IVA`,
+    vat: (rate: number) => `IVA (${rate} %)`,
     unitPrice: (quantity: number, unitPrice: string) => `${quantity} × ${unitPrice}`,
     serviceFee: 'Tarifa de servicio',
     delivery: (city: string) => `Envío · ${city}`,
@@ -173,6 +181,8 @@ export const messages = {
       body: 'La reserva del producto expiró o fue cancelada. No se realizó ningún cobro.',
     },
     product: (name: string, quantity: number) => `${name} × ${quantity}`,
+    productsBeforeVat: 'Productos sin IVA',
+    vat: (rate: number) => `IVA (${rate} %)`,
     total: 'Total pagado',
     // Nothing was charged: the amount is only the order's.
     totalNotCharged: 'Total del pedido',
